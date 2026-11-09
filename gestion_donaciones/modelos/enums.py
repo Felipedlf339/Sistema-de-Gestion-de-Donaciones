@@ -30,3 +30,14 @@ class EstadoElegibilidad(Enum):
     APTO = "APTO"
     DIFERIDO_TEMPORAL = "DIFERIDO_TEMPORAL"
     RECHAZADO_PERMANENTE = "RECHAZADO_PERMANENTE"
+
+class TipoDonacion(Enum):
+    SANGRE = "SANGRE"
+    PLAQUETAS = "PLAQUETAS"
+ 
+ 
+class EstadoUnidad(Enum):
+    DISPONIBLE = "DISPONIBLE"
+    RESERVADA = "RESERVADA"
+    UTILIZADA = "UTILIZADA"
+    CADUCADA = "CADUCADA"
