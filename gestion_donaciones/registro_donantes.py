@@ -21,8 +21,14 @@ class RegistroDonantes:
         return self.donantes.get(clave)
 
     def registrar(self, donante):
-        # valida y guarda un donante nuevo.
-        # devuelve una lista con los mensajes de error.
+        # valida y guarda un donante nuevo
+        # devuelve una lista con los mensajes de error
+
+        # si el RUN ya existe no se guarda de nuevo
+        # quien llama puede usar buscar_por_run() para mostrar el donante registrado.
+        if self.buscar_por_run(donante.run) is not None:
+            return ["Ya existe un donante registrado con ese RUN."]
+
         errores = validar_donante(donante)
 
         if len(errores) > 0:
