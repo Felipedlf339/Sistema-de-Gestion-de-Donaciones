@@ -25,3 +25,6 @@ class Donante(Persona):
 
     def es_apto(self):
         return self.estado_elegibilidad == EstadoElegibilidad.APTO
+    
+    def cambiar_elegibilidad(self, nuevo_estado):
+        self.estado_elegibilidad = nuevo_estado

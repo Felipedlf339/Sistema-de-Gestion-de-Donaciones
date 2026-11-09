@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Elegibilidad</title>
+    <script src="/static/script.js" defer></script>
+</head>
+<body>
+    <h2>Modificar Elegibilidad</h2>
+    
+    <div id="info-donante">
+        <p><strong>Donante:</strong> {{ donante.nombre }} (RUN: {{ donante.run }})</p>
+        <p><strong>Estado actual:</strong> <span id="texto-estado">{{ donante.estado }}</span></p>
+    </div>
+
+    <form id="form-elegibilidad">
+        <label for="selector-estado">Nuevo estado de elegibilidad:</label>
+        <select id="selector-estado" required>
+            <option value="Apto">Apto</option>
+            <option value="Diferido temporal">Diferido temporal</option>
+            <option value="Rechazado permanente">Rechazado permanente</option>
+        </select>
+        <br><br>
+        <button type="submit">Guardar estado</button>
+    </form>
+</body>
+</html>
