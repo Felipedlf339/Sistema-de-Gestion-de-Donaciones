@@ -28,4 +28,4 @@ pip install -r requirements.txt
 ```bash
 uvicorn main:app --reload
 ```
-El servidor quedará corriendo en `[http://127.0.0.1:8000](http://127.0.0.1:8000)`.
+El servidor quedará corriendo en [http://127.0.0.1:8000](http://127.0.0.1:8000).
