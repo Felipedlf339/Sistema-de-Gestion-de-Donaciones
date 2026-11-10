@@ -30,3 +30,7 @@ class EstadoElegibilidad(Enum):
     APTO = "APTO"
     DIFERIDO_TEMPORAL = "DIFERIDO_TEMPORAL"
     RECHAZADO_PERMANENTE = "RECHAZADO_PERMANENTE"
+
+class CargoPersonal(Enum):
+    ATENCION_DONANTE = "Personal de atención al donante"
+    ENCARGADO_INVENTARIO = "Encargado de inventario"

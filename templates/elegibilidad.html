@@ -15,7 +15,7 @@
         <p><strong>Donante:</strong> {{ donante.nombre }} (RUN: {{ donante.run }})</p>
         <p><strong>Estado actual:</strong> <span id="texto-estado">{{ donante.estado }}</span></p>
     </div>
-
+    {% if usuario.cargo.name == 'ATENCION_DONANTE' %}
     <form id="form-elegibilidad">
         <label for="selector-estado">Nuevo estado de elegibilidad:</label>
         <select id="selector-estado" required>
@@ -32,6 +32,11 @@
 
         <button type="submit">Guardar estado</button>
     </form>
+    {% else %}
+        <div style="background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin-top: 20px;">
+            <p><strong>Acceso denegado:</strong> Tu cargo de "{{ usuario.cargo.value }}" no tiene permisos para modificar la elegibilidad de los donantes.</p>
+        </div>
+    {% endif %}
 </body>
 
 </html>
