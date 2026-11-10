@@ -29,3 +29,11 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 El servidor quedará corriendo en [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+## Pruebas
+
+Las pruebas usan `unittest`. Desde la raíz del proyecto:
+
+```bash
+python -m unittest -v
+```
