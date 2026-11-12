@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Elegibilidad</title>
+    <script src="/static/script.js" defer></script>
+</head>
+
+<body>
+    <h2>Modificar Elegibilidad</h2>
+
+    <div id="info-donante">
+        <p><strong>Donante:</strong> {{ donante.nombre }} (RUN: {{ donante.run }})</p>
+        <p><strong>Estado actual:</strong> <span id="texto-estado">{{ donante.estado }}</span></p>
+    </div>
+    {% if usuario.cargo.name == 'ATENCION_DONANTE' %}
+    <form id="form-elegibilidad">
+        <label for="selector-estado">Nuevo estado de elegibilidad:</label>
+        <select id="selector-estado" required>
+            <option value="APTO">Apto</option>
+            <option value="DIFERIDO_TEMPORAL">Diferido temporal</option>
+            <option value="RECHAZADO_PERMANENTE">Rechazado permanente</option>
+        </select>
+        <br><br>
+        <div id="contenedor-motivo" style="display: none;">
+            <label for="input-motivo">Motivo del rechazo/deferimiento:</label>
+            <input type="text" id="input-motivo">
+        </div>
+        <br>
+
+        <button type="submit">Guardar estado</button>
+    </form>
+    {% else %}
+        <div style="background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin-top: 20px;">
+            <p><strong>Acceso denegado:</strong> Tu cargo de "{{ usuario.cargo.value }}" no tiene permisos para modificar la elegibilidad de los donantes.</p>
+        </div>
+    {% endif %}
+</body>
+
+</html>

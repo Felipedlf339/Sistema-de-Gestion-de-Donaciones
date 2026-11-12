@@ -41,3 +41,18 @@ class EstadoUnidad(Enum):
     RESERVADA = "RESERVADA"
     UTILIZADA = "UTILIZADA"
     CADUCADA = "CADUCADA"
+
+class TipoDonacion(Enum):
+    SANGRE = "SANGRE"
+    PLAQUETAS = "PLAQUETAS"
+ 
+ 
+class EstadoUnidad(Enum):
+    DISPONIBLE = "DISPONIBLE"
+    RESERVADA = "RESERVADA"
+    UTILIZADA = "UTILIZADA"
+    CADUCADA = "CADUCADA"
+
+class CargoPersonal(Enum):
+    ATENCION_DONANTE = "Personal de atención al donante"
+    ENCARGADO_INVENTARIO = "Encargado de inventario"
