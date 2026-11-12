@@ -1,10 +1,18 @@
 const selectorEstado = document.getElementById('selector-estado');
 const contenedorMotivo = document.getElementById('contenedor-motivo');
 const inputMotivo = document.getElementById('input-motivo');
+const textoEstado = document.getElementById('texto-estado');
+
+const ETIQUETAS = {
+    APTO: 'Apto',
+    DIFERIDO_TEMPORAL: 'Diferido temporal',
+    RECHAZADO_PERMANENTE: 'Rechazado permanente',
+};
+
+let estadoActual = textoEstado.dataset.valor;
 
 // Escucha cuando el usuario cambia la opción del selector
 selectorEstado.addEventListener('change', function() {
-    const estadoActual = document.getElementById('texto-estado').innerText;
     if (this.value !== estadoActual) {
         contenedorMotivo.style.display = 'block';
         inputMotivo.required = true; // obligatorio en el navegador
@@ -19,7 +27,6 @@ document.getElementById('form-elegibilidad').addEventListener('submit', async fu
 
     const nuevoEstado = selectorEstado.value;
     const motivo = inputMotivo.value;
-    const estadoActual = document.getElementById('texto-estado').innerText;
 
     if (nuevoEstado === estadoActual) {
         alert("No hubo cambio de estado. No se guardó nada.")
@@ -39,7 +46,9 @@ document.getElementById('form-elegibilidad').addEventListener('submit', async fu
 
         if (response.ok) {
             // Actualiza la pantalla para que el usuario vea el cambio
-            document.getElementById('texto-estado').innerText = data.estado_actual;
+            estadoActual = data.estado;
+            textoEstado.dataset.valor = data.estado;
+            textoEstado.innerText = ETIQUETAS[data.estado] ?? data.estado;
             alert(data.mensaje);
 
             inputMotivo.value = '';
