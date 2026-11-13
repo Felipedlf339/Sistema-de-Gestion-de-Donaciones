@@ -1,6 +1,6 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-from gestion_donaciones.rutas import disponibilidad, elegibilidad, registro_donaciones
+from gestion_donaciones.rutas import disponibilidad, elegibilidad, registro_donaciones, registro_donantes
 import json
 from fastapi.staticfiles import StaticFiles
 from gestion_donaciones.rutas.elegibilidad import router as elegibilidad_router
@@ -33,3 +33,4 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(disponibilidad.router)
 app.include_router(elegibilidad.router)
 app.include_router(registro_donaciones.router)
+app.include_router(registro_donantes.router)
