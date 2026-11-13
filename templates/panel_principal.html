@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Gestión de Donaciones</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; flex-direction: column;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: #dcdee1;
+  }
+  nav {
+    background: #6b0b15; display: flex; align-items: center;
+    gap: 6px; padding: 0 16px; flex-wrap: wrap;
+  }
+  nav .titulo { color: #fff; font-weight: 700; margin-right: 20px; padding: 14px 0; }
+  nav button {
+    background: transparent; color: #f1d4d7; border: 0;
+    padding: 16px 18px; font-size: .95rem; font-weight: 600; cursor: pointer;
+    border-bottom: 4px solid transparent;
+  }
+  nav button:hover { color: #fff; background: rgba(255,255,255,.08); }
+  nav button.activo { color: #fff; border-bottom-color: #fff; }
+  iframe { flex: 1; width: 100%; border: 0; background: #dcdee1; }
+</style>
+</head>
+<body>
+  <nav>
+    <span class="titulo"> Gestión de Donaciones</span>
+    <button data-url="/donantes/registrar">Registrar donante</button>
+    <button data-url="/elegibilidad">Elegibilidad</button>
+    <button data-url="/donaciones/registrar">Registrar donación</button>
+    <button data-url="/stock">Disponibilidad</button>
+  </nav>
+
+  <iframe id="vista" name="vista"></iframe>
+
+  <script>
+    const vista = document.getElementById("vista");
+    const botones = document.querySelectorAll("nav button");
+
+    function ir(url) { vista.src = url; }
+
+    botones.forEach(b => b.addEventListener("click", () => ir(b.dataset.url)));
+
+    // Marca como activo el botón de la página que esté cargada
+    // (también cuando cambias de página con los enlaces internos)
+    vista.addEventListener("load", () => {
+      const ruta = vista.contentWindow.location.pathname;
+      botones.forEach(b => b.classList.toggle("activo", b.dataset.url === ruta));
+    });
+
+    ir("/donantes/registrar");
+  </script>
+</body>
+</html>
