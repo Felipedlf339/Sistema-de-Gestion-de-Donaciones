@@ -33,6 +33,7 @@ def obtener_o_crear_donante_prueba() -> Donante:
             correo="juan.perez@correo.cl",
             telefono="+56912345678",
         )
+        nuevo_donante.estado_elegibilidad = EstadoElegibilidad.APTO
         errores = registro.registrar(nuevo_donante)
         if errores:
             raise HTTPException(status_code=500, detail=f"No se pudo crear el donante de prueba: {errores}")
