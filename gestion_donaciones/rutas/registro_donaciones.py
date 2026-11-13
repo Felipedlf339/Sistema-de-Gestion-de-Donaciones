@@ -39,7 +39,7 @@ def buscar_donante(run: str):
 
 
 @router.post("/registrar")
-def procesar_registro_donacion(datos: DonacionCreate):
+async def procesar_registro_donacion(datos: DonacionCreate):
     donante = registro.buscar_por_run(datos.id_donante)
     if donante is None:
         raise HTTPException(status_code=404, detail="No hay un donante registrado con ese RUN.")
@@ -53,6 +53,15 @@ def procesar_registro_donacion(datos: DonacionCreate):
         donacion, unidad = registrar_donacion(donante, tipo)
     except DonanteNoApto as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    datos_json = {
+        "componente": unidad.tipo_componente.value,
+        "grupo_sanguineo": unidad.tipo_sangre.value,
+        "caducidad": unidad.fecha_caducidad.isoformat(),
+        "estado": unidad.estado.value
+    }
+    from main import notificar_nuevo_stock
+    await notificar_nuevo_stock(datos_json)
 
     return {
         "mensaje": f"¡Donación de {tipo.value.lower()} registrada con éxito!",
