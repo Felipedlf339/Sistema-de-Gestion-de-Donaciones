@@ -1,46 +1,141 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modificar Elegibilidad</title>
     <script src="/static/script.js" defer></script>
+    <style>
+        :root {
+            --sangre: #a01220;
+            --sangre-oscuro: #6b0b15;
+            --gris-fondo: #dcdee1;
+            --gris-claro: #eceef0;
+            --gris-borde: #b9bdc3;
+            --gris-texto: #33363b;
+            --gris-suave: #666b73;
+            --blanco: #fbfbfb;
+            --ok: #2c6a3c;
+            --aviso: #96640a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh;
+            background: var(--gris-fondo); color: var(--gris-texto);
+            font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        header {
+            width: 100%; background: var(--sangre); color: #fff; text-align: center;
+            border-bottom: 6px solid var(--sangre-oscuro); padding: 26px 16px 22px;
+        }
+        header h1 { margin: 0; font-size: 1.7rem; font-weight: 600; letter-spacing: .4px; }
+        header p { margin: 6px 0 0; font-size: .95rem; color: #f1d4d7; }
+
+        main { width: 100%; max-width: 560px; padding: 26px 16px 10px; }
+
+        .panel {
+            background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 3px;
+            box-shadow: 0 1px 0 var(--gris-borde);
+            padding: 22px 24px 26px; margin-bottom: 20px; overflow: hidden;
+        }
+        .panel h2 {
+            margin: -22px -24px 20px; padding: 10px 24px; font-size: 1rem; font-weight: 600;
+            background: var(--gris-claro); color: var(--sangre-oscuro); text-align: left;
+            border-bottom: 1px solid var(--gris-borde); border-left: 5px solid var(--sangre);
+        }
+
+        .donante dl { display: grid; grid-template-columns: 1fr auto; margin: 0; text-align: left; }
+        .donante dt, .donante dd { padding: 9px 4px; border-bottom: 1px solid var(--gris-claro); }
+        .donante dt { color: var(--gris-suave); }
+        .donante dd { margin: 0; font-weight: 600; text-align: right; }
+        .donante dt:nth-last-of-type(1), .donante dd:last-of-type { border-bottom: 0; }
+        
+        .estado { display: inline-block; font-weight: 600; padding: 3px 10px; border-radius: 3px; color: #fff; font-size: 0.9rem; }
+        .estado.apto { background: var(--ok); }
+        .estado.no-apto { background: var(--aviso); }
+        .estado.rechazado { background: var(--sangre-oscuro); }
+        .estado.sin-evaluar { background: var(--gris-suave); }
+
+        label { display: block; font-weight: 600; margin-bottom: 8px; color: var(--gris-texto); }
+        select, input[type=text] {
+            width: 100%; padding: 10px 12px; font-size: 1.05rem;
+            border: 1px solid var(--gris-borde); border-radius: 3px; background: #fff; color: inherit;
+        }
+        
+        button {
+            width: 100%; padding: 12px 22px; font-size: 1rem; font-weight: 600; cursor: pointer;
+            border: 1px solid var(--sangre-oscuro); border-radius: 3px; background: var(--sangre); color: #fff;
+            margin-top: 15px;
+        }
+        button:hover { background: var(--sangre-oscuro); }
+        select:focus-visible, input:focus-visible, button:focus-visible { outline: 3px solid #d98a92; outline-offset: 2px; }
+
+        .msg { border-radius: 3px; padding: 14px; margin-top: 16px; text-align: left; }
+        .msg.error { background: #f6e1e3; border: 1px solid var(--sangre); color: var(--sangre-oscuro); }
+        .msg.exito { background: #e1efe4; border: 1px solid var(--ok); color: var(--ok); }
+        .msg.aviso { background: #fdf5e6; border: 1px solid var(--aviso); color: var(--aviso); }
+        .msg p { margin: 0; }
+    </style>
 </head>
 
 <body>
-    <h2>Modificar Elegibilidad</h2>
-    {% set actual = donante.estado_elegibilidad.value if donante.estado_elegibilidad else '' %}
-    {% set etiquetas = {'APTO': 'Apto', 'DIFERIDO_TEMPORAL': 'Diferido temporal', 'RECHAZADO_PERMANENTE': 'Rechazado permanente'} %}
-    <div id="info-donante">
-        <p><strong>Donante:</strong> {{ donante.nombre }} (RUN: {{ donante.run }})</p>
-        <p><strong>Estado actual:</strong> <span id="texto-estado" data-valor="{{ actual }}">{{ etiquetas.get(actual, 'Sin evaluar') }}</span></p>
-    </div>
-    {% if usuario.cargo.name == 'ATENCION_DONANTE' %}
-    <form id="form-elegibilidad">
-        <label for="selector-estado">Nuevo estado de elegibilidad:</label>
-        <select id="selector-estado" required>
-            <option value="APTO" {% if actual=='APTO' %}selected{% endif %}>Apto</option>
-            <option value="DIFERIDO_TEMPORAL" {% if actual=='DIFERIDO_TEMPORAL' %}selected{% endif %}>Diferido temporal
-            </option>
-            <option value="RECHAZADO_PERMANENTE" {% if actual=='RECHAZADO_PERMANENTE' %}selected{% endif %}>Rechazado
-                permanente</option>
-        </select>
-        <br><br>
-        <div id="contenedor-motivo" style="display: none;">
-            <label for="input-motivo">Motivo del cambio:</label>
-            <input type="text" id="input-motivo">
+    <header>
+        <h1>Modificar Elegibilidad</h1>
+        <p>Centro de donación · Personal de atención al donante</p>
+    </header>
+
+    <main>
+        {% set actual = donante.estado_elegibilidad.value if donante.estado_elegibilidad else '' %}
+        {% set etiquetas = {'APTO': 'Apto', 'DIFERIDO_TEMPORAL': 'Diferido temporal', 'RECHAZADO_PERMANENTE': 'Rechazado permanente'} %}
+        {% set clase_estado = 'apto' if actual == 'APTO' else 'no-apto' if actual == 'DIFERIDO_TEMPORAL' else 'rechazado' if actual == 'RECHAZADO_PERMANENTE' else 'sin-evaluar' %}
+
+        <section class="panel donante" id="info-donante">
+            <h2>Datos del donante</h2>
+            <dl>
+                <dt>Nombre</dt>
+                <dd>{{ donante.nombre }}</dd>
+                
+                <dt>RUN</dt>
+                <dd>{{ donante.run }}</dd>
+                
+                <dt>Estado actual</dt>
+                <dd>
+                    <span id="texto-estado" data-valor="{{ actual }}" class="estado {{ clase_estado }}">
+                        {{ etiquetas.get(actual, 'Sin evaluar') }}
+                    </span>
+                </dd>
+            </dl>
+        </section>
+
+        {% if usuario.cargo.name == 'ATENCION_DONANTE' %}
+        <section class="panel">
+            <h2>Actualizar estado</h2>
+            <form id="form-elegibilidad">
+                <div>
+                    <label for="selector-estado">Nuevo estado de elegibilidad:</label>
+                    <select id="selector-estado" required>
+                        <option value="APTO" {% if actual == 'APTO' %}selected{% endif %}>Apto</option>
+                        <option value="DIFERIDO_TEMPORAL" {% if actual == 'DIFERIDO_TEMPORAL' %}selected{% endif %}>Diferido temporal</option>
+                        <option value="RECHAZADO_PERMANENTE" {% if actual == 'RECHAZADO_PERMANENTE' %}selected{% endif %}>Rechazado permanente</option>
+                    </select>
+                </div>
+
+                <div id="contenedor-motivo" style="display: none; margin-top: 20px;">
+                    <label for="input-motivo">Motivo del cambio:</label>
+                    <input type="text" id="input-motivo" placeholder="Especifique el motivo de rechazo o diferición">
+                </div>
+
+                <button type="submit">Guardar estado</button>
+                <div id="msg-feedback" class="msg" style="display: none;"></div>
+            </form>
+        </section>
+        {% else %}
+        <div class="msg error">
+            <p><strong>Acceso denegado:</strong> Tu cargo de "{{ usuario.cargo.value }}" no tiene permisos para modificar la elegibilidad de los donantes.</p>
         </div>
-        <br>
-
-        <button type="submit">Guardar estado</button>
-    </form>
-    {% else %}
-    <div style="background-color: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin-top: 20px;">
-        <p><strong>Acceso denegado:</strong> Tu cargo de "{{ usuario.cargo.value }}" no tiene permisos para modificar la
-            elegibilidad de los donantes.</p>
-    </div>
-    {% endif %}
+        {% endif %}
+    </main>
 </body>
-
 </html>
