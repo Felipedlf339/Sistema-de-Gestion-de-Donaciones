@@ -24,4 +24,4 @@ def registrar_donacion(donante, tipo_donacion):
     donacion = Donacion(id_donante=id_donante, tipo_donacion=tipo_donacion)
     unidad = generar_unidad(donacion, donante)
 
-    return donacion
+    return donacion, unidad

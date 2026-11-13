@@ -3,6 +3,18 @@ from gestion_donaciones.database import obtener_conexion
 def insertar_datos_prueba():
     conexion = obtener_conexion()
     cursor = conexion.cursor()
+
+    donantes = [
+        ("12345678-5", "Javiera Aravena Gutierrez", "A", "+", "APTO"),
+        ("11111111-1", "Francisca Hidalgo", "O", "-", "DIFERIDO_TEMPORAL"),
+        ("7654321-6", "Felipe de la Fuente", "AB", "+", "RECHAZADO_PERMANENTE")
+    ]
+
+    for run, nombre, grupo, rh, estado in donantes:
+        cursor.execute("""
+            INSERT OR REPLACE INTO donantes (run, nombre, grupo_sanguineo, factor_rh, estado_elegibilidad)
+            VALUES (?, ?, ?, ?, ?)
+        """, (run, nombre, grupo, rh, estado))
     
     # Insertamos 5 unidades de prueba (4 disponibles, 1 usada para verificar que se oculta)
     unidades = [
@@ -12,15 +24,15 @@ def insertar_datos_prueba():
         (4, 'Sangre', 'B+', '2026-10-15', '2026-11-26', 'Disponible'),
         (5, 'Sangre', 'AB+', '2026-11-11', '2026-12-23', 'Usado')
     ]
-    
+
     cursor.executemany("""
-        INSERT INTO unidades (id_donacion, tipo_componente, tipo_sangre, fecha_extraccion, fecha_caducidad, estado)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, unidades)
-    
+            INSERT OR IGNORE INTO unidades (id_donacion, tipo_componente, tipo_sangre, fecha_extraccion, fecha_caducidad, estado)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, unidades)
+        
     conexion.commit()
     conexion.close()
-    print("¡Datos inyectados con éxito en la base de datos!")
+    print("¡Los 3 donantes de ejemplo y las unidades fueron inyectados con éxito!")
 
 if __name__ == "__main__":
     insertar_datos_prueba()

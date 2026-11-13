@@ -19,7 +19,7 @@ def consultar_disponibilidad(
     cursor = conexion.cursor()
 
     # Consulta base: Buscar SOLO unidades con estado 'Disponible'
-    query = "SELECT * FROM unidades WHERE estado = 'Disponible'"
+    query = "SELECT * FROM unidades WHERE LOWER(estado) = 'disponible'"
     parametros = []
 
     # Agregamos los filtros dinámicos si el usuario los seleccionó
