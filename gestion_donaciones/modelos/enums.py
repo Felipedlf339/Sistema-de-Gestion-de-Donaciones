@@ -35,18 +35,6 @@ class TipoDonacion(Enum):
     SANGRE = "SANGRE"
     PLAQUETAS = "PLAQUETAS"
  
- 
-class EstadoUnidad(Enum):
-    DISPONIBLE = "DISPONIBLE"
-    RESERVADA = "RESERVADA"
-    UTILIZADA = "UTILIZADA"
-    CADUCADA = "CADUCADA"
-
-class TipoDonacion(Enum):
-    SANGRE = "SANGRE"
-    PLAQUETAS = "PLAQUETAS"
- 
- 
 class EstadoUnidad(Enum):
     DISPONIBLE = "DISPONIBLE"
     RESERVADA = "RESERVADA"
