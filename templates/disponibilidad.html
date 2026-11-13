@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Disponibilidad</title>
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --bg-body: #f4f6f8;
+            --bg-card: #ffffff;
+            --text-main: #2c3e50;
+            --border-light: #e2e8f0;
+        }
+
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .contenedor {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--bg-card);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 { 
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 15px;
+        }
+        
+        .caja-filtros { 
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background-color: #fafbfc; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 30px; 
+            border: 1px solid var(--border-light);
+            flex-wrap: wrap; 
+        }
+
+        .grupo-filtro {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .caja-filtros label { 
+            font-weight: 500; 
+            font-size: 14px;
+            color: #4a5568;
+        }
+
+        .caja-filtros select, .caja-filtros input { 
+            padding: 9px 12px; 
+            border-radius: 6px; 
+            border: 1px solid #cbd5e1;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: white;
+            min-width: 160px;
+            font-family: inherit;
+        }
+        
+        .caja-filtros select:focus, .caja-filtros input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+        }
+
+        .caja-filtros button { 
+            padding: 10px 24px; 
+            background-color: var(--primary-color); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px;
+            transition: background-color 0.2s, transform 0.1s;
+            margin-left: auto;
+        }
+
+        .caja-filtros button:hover { background-color: #b71c1c; }
+        .caja-filtros button:active { transform: scale(0.97); }
+
+        .tabla-contenedor {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            background-color: white;
+        }
+        
+        th, td { 
+            padding: 16px; 
+            text-align: left; 
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        th { 
+            background-color: #f8fafc; 
+            color: #475569; 
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f5f9; }
+
+        td strong { color: var(--primary-color); }
+
+        .mensaje-vacio { 
+            text-align: center; 
+            color: #64748b; 
+            padding: 40px; 
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h2>Stock Disponible de Hemocomponentes</h2>
+        
+        <form method="GET" action="/stock" class="caja-filtros">
+            <div class="grupo-filtro">
+                <label for="tipo">Componente:</label>
+                <select name="tipo" id="tipo">
+                    <option value="">Todos los componentes</option>
+                    <option value="Glóbulos Rojos">Glóbulos Rojos</option>
+                    <option value="Plaquetas">Plaquetas</option>
+                </select>
+            </div>
+
+            <div class="grupo-filtro">
+                <label for="grupo">Grupo Sanguíneo:</label>
+                <select name="grupo" id="grupo">
+                    <option value="">Todos los grupos</option>
+                    <option value="O+">O+</option>
+                    <option value="A-">A-</option>
+                </select>
+            </div>
+
+            <div class="grupo-filtro">
+                <label for="caducidad">Vence antes de:</label>
+                <input type="text" 
+                       name="caducidad" 
+                       id="caducidad" 
+                       placeholder="Seleccionar fecha..."
+                       onfocus="this.type='date'"
+                       onclick="this.showPicker()"
+                       onblur="if(!this.value) this.type='text'"
+                       style="cursor: pointer;">
+            </div>
+
+            <button type="submit">Aplicar Filtros</button>
+        </form>
+
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID Unidad</th>
+                        <th>Componente</th>
+                        <th>Grupo Sanguíneo</th>
+                        <th>Caducidad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for unidad in unidades %}
+                    <tr>
+                        <td><strong>{{ unidad.id_unidad }}</strong></td>
+                        <td>{{ unidad.tipo_componente }}</td>
+                        <td>{{ unidad.tipo_sangre }}</td>
+                        <td>{{ unidad.caducidad }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="mensaje-vacio">No se encontraron unidades disponibles con esos filtros.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
