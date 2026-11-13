@@ -47,6 +47,8 @@ class RegistroDonantes:
 
         # si el RUN ya existe no se guarda de nuevo
         # quien llama puede usar buscar_por_run() para mostrar el donante registrado.
+        if self.buscar_por_run(donante.run) is not None:
+            return ["Ya existe un donante registrado con ese RUN."]
 
         errores = validar_donante(donante)
         if errores:
