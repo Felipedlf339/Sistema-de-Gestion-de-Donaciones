@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registrar donación</title>
+<style>
+  :root {
+    --sangre: #a01220;
+    --sangre-oscuro: #6b0b15;
+    --gris-fondo: #dcdee1;
+    --gris-claro: #eceef0;
+    --gris-borde: #b9bdc3;
+    --gris-texto: #33363b;
+    --gris-suave: #666b73;
+    --blanco: #fbfbfb;
+    --ok: #2c6a3c;
+    --aviso: #96640a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--gris-fondo); color: var(--gris-texto);
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  header {
+    width: 100%; background: var(--sangre); color: #fff; text-align: center;
+    border-bottom: 6px solid var(--sangre-oscuro); padding: 26px 16px 22px;
+  }
+  header h1 { margin: 0; font-size: 1.7rem; font-weight: 600; letter-spacing: .4px; }
+  header p { margin: 6px 0 0; font-size: .95rem; color: #f1d4d7; }
+
+  main { width: 100%; max-width: 560px; padding: 26px 16px 10px; text-align: center; }
+
+  .panel {
+    background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 3px;
+    box-shadow: 0 1px 0 var(--gris-borde);
+    padding: 22px 24px 26px; margin-bottom: 20px; overflow: hidden;
+  }
+  .panel h2 {
+    margin: -22px -24px 20px; padding: 10px 24px; font-size: 1rem; font-weight: 600;
+    background: var(--gris-claro); color: var(--sangre-oscuro); text-align: left;
+    border-bottom: 1px solid var(--gris-borde); border-left: 5px solid var(--sangre);
+  }
+  #panelUnidad h2 { color: var(--ok); border-left-color: var(--ok); }
+
+  label { display: block; font-weight: 600; margin-bottom: 8px; }
+  .fila { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  input[type=text] {
+    flex: 1; min-width: 180px; max-width: 270px; padding: 10px 12px; font-size: 1.05rem; text-align: center;
+    border: 1px solid var(--gris-borde); border-radius: 3px; background: #fff; color: inherit;
+  }
+  button {
+    padding: 10px 22px; font-size: 1rem; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--sangre-oscuro); border-radius: 3px; background: var(--sangre); color: #fff;
+  }
+  button:hover:not(:disabled) { background: var(--sangre-oscuro); }
+  button:disabled { background: #b9a3a6; cursor: not-allowed; }
+  button.sec { background: #fff; color: var(--sangre-oscuro); border-color: var(--gris-borde); }
+  button.sec:hover { background: var(--gris-claro); }
+  input:focus-visible, button:focus-visible, .opcion:focus-within { outline: 3px solid #d98a92; outline-offset: 2px; }
+  .ayuda { font-size: .85rem; color: var(--gris-suave); margin-top: 10px; }
+
+  .donante dl { display: grid; grid-template-columns: 1fr auto; margin: 0; text-align: left; }
+  .donante dt, .donante dd { padding: 9px 4px; border-bottom: 1px solid var(--gris-claro); }
+  .donante dt { color: var(--gris-suave); }
+  .donante dd { margin: 0; font-weight: 600; text-align: right; }
+  .donante dt:nth-last-of-type(1), .donante dd:last-of-type { border-bottom: 0; }
+  .sangre-tipo {
+    display: inline-block; min-width: 44px; text-align: center; background: #fff;
+    border: 2px solid var(--sangre); color: var(--sangre); font-weight: 700; padding: 0 10px; border-radius: 3px;
+  }
+  .estado { display: inline-block; font-weight: 600; padding: 1px 10px; border-radius: 3px; color: #fff; }
+  .estado.apto { background: var(--ok); }
+  .estado.no-apto { background: var(--aviso); }
+  .estado.rechazado { background: var(--sangre-oscuro); }
+
+  .opciones { display: flex; gap: 12px; margin-bottom: 8px; }
+  .opcion { flex: 1; border: 1px solid var(--gris-borde); border-radius: 3px; padding: 12px 8px; cursor: pointer; background: #fff; font-weight: 600; margin: 0; }
+  .opcion input { margin-right: 6px; accent-color: var(--sangre); }
+  .opcion:has(input:checked) { border-color: var(--sangre); background: #f5e6e8; }
+
+  .msg { border-radius: 3px; padding: 12px 14px; margin-top: 16px; font-weight: 600; text-align: left; }
+  .msg.error { background: #f6e1e3; border: 1px solid var(--sangre); color: var(--sangre-oscuro); }
+  .msg.exito { background: #e1efe4; border: 1px solid var(--ok); color: var(--ok); }
+  .oculto { display: none; }
+  footer { font-size: .8rem; color: var(--gris-suave); padding: 6px 16px 26px; text-align: center; }
+  @media (max-width: 480px) { .opciones { flex-direction: column; } header h1 { font-size: 1.4rem; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Registrar donación</h1>
+  <p>Centro de donación · Personal de atención al donante</p>
+</header>
+
+<main>
+  <section class="panel">
+    <label for="run">RUN del donante</label>
+    <div class="fila">
+      <input type="text" id="run" placeholder="12.345.678-5" autocomplete="off">
+      <button type="button" id="btnBuscar">Buscar</button>
+    </div>
+    <div class="ayuda">El grupo sanguíneo y el factor Rh se toman del registro del donante.</div>
+    <div id="msgBusqueda" class="msg error oculto" role="alert"></div>
+  </section>
+
+  <section class="panel donante oculto" id="panelDonante">
+    <h2>Datos del donante</h2>
+    <dl>
+      <dt>Nombre</dt><dd id="dNombre"></dd>
+      <dt>RUN</dt><dd id="dRun"></dd>
+      <dt>Tipo de sangre</dt><dd><span class="sangre-tipo" id="dSangre"></span></dd>
+      <dt>Estado</dt><dd><span class="estado" id="dEstado"></span></dd>
+    </dl>
+  </section>
+
+  <section class="panel oculto" id="panelDonacion">
+    <div class="opciones">
+      <label class="opcion"><input type="radio" name="tipo" value="SANGRE" checked>Sangre</label>
+      <label class="opcion"><input type="radio" name="tipo" value="PLAQUETAS">Plaquetas</label>
+    </div>
+    <div class="ayuda" id="ayudaCaducidad"></div>
+    <div style="margin-top:18px">
+      <button type="button" id="btnGuardar">Guardar</button>
+      <button type="button" class="sec" id="btnLimpiar">Cancelar</button>
+    </div>
+    <div id="msgDonacion" class="msg oculto" role="alert"></div>
+  </section>
+
+  <section class="panel donante oculto" id="panelUnidad">
+    <h2>Unidad generada</h2>
+    <dl>
+      <dt>N.º de donación</dt><dd id="uDonacion"></dd>
+      <dt>Componente</dt><dd id="uComp"></dd>
+      <dt>Tipo de sangre</dt><dd id="uSangre"></dd>
+      <dt>Fecha de extracción</dt><dd id="uExtr"></dd>
+      <dt>Fecha de caducidad</dt><dd id="uCad"></dd>
+      <dt>Estado</dt><dd><span class="estado apto">Disponible</span></dd>
+    </dl>
+  </section>
+</main>
+<footer>Datos de ejemplo: 12345678-5 (Apto), 11111111-1 (Diferido temporal), 7654321-6 (Rechazado permanente)</footer>
+
+<script>
+ 
+  var DIAS_CADUCIDAD = { SANGRE: 42, PLAQUETAS: 5 };
+  var NOMBRE_ESTADO = { APTO: "Apto", DIFERIDO_TEMPORAL: "Diferido temporal", RECHAZADO_PERMANENTE: "Rechazado permanente" };
+
+  // temporales mientras no hay base de datos
+  var DONANTES = {
+    "12345678-5": { nombre: "Javiera Aravena Gutierrez", sangre: "A+", estado: "APTO" },
+    "11111111-1": { nombre: "Francisca Hidalgo", sangre: "O-", estado: "DIFERIDO_TEMPORAL" },
+    "7654321-6":  { nombre: "Felipe de la Fuente Llanos", sangre: "AB+", estado: "RECHAZADO_PERMANENTE" }
+  };
+  var contadorDonaciones = 1;
+  var donanteActual = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function normalizarRun(t) {
+    var l = t.replace(/[.\-\s]/g, "").toUpperCase();
+    var cuerpo = l.slice(0, -1).replace(/^0+/, "");
+    return cuerpo === "" ? null : cuerpo + "-" + l.slice(-1);
+  }
+  function dv(cuerpo) {
+    var suma = 0, m = 2;
+    for (var i = cuerpo.length - 1; i >= 0; i--) {
+      suma += parseInt(cuerpo[i], 10) * m;
+      m = m === 7 ? 2 : m + 1;
+    }
+    var r = 11 - (suma % 11);
+    return r === 11 ? "0" : r === 10 ? "K" : String(r);
+  }
+  function runValido(t) {
+    var run = normalizarRun(t);
+    if (!run) return false;
+    var p = run.split("-");
+    if (!/^\d{7,8}$/.test(p[0])) return false;
+    return dv(p[0]) === p[1];
+  }
+
+  function fmt(d) {
+    return d.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+  function mostrar(el, msg, tipo) {
+    el.textContent = msg;
+    el.className = "msg " + tipo;
+  }
+  function ocultar() {
+    ["msgBusqueda", "msgDonacion", "panelDonante", "panelDonacion", "panelUnidad"].forEach(function (id) {
+      $(id).classList.add("oculto");
+    });
+  }
+  function tipoElegido() {
+    return document.querySelector("input[name=tipo]:checked").value;
+  }
+  function actualizarAyuda() {
+    var t = tipoElegido();
+    $("ayudaCaducidad").textContent = "Caduca " + DIAS_CADUCIDAD[t] + " días después de la extracción.";
+  }
+
+  function buscar() {
+    ocultar();
+    donanteActual = null;
+    var texto = $("run").value.trim();
+    if (texto === "") { mostrar($("msgBusqueda"), "Ingrese el RUN del donante.", "error"); return; }
+    if (!runValido(texto)) { mostrar($("msgBusqueda"), "El RUN no es válido. Revise el número y el dígito verificador.", "error"); return; }
+    var run = normalizarRun(texto);
+    var d = DONANTES[run];
+    if (!d) { mostrar($("msgBusqueda"), "No hay un donante registrado con ese RUN. Regístrelo primero.", "error"); return; }
+
+    donanteActual = { run: run, nombre: d.nombre, sangre: d.sangre, estado: d.estado };
+    $("dNombre").textContent = d.nombre;
+    $("dRun").textContent = run;
+    $("dSangre").textContent = d.sangre;
+    var est = $("dEstado");
+    est.textContent = NOMBRE_ESTADO[d.estado];
+    est.className = "estado " + (d.estado === "APTO" ? "apto" : d.estado === "DIFERIDO_TEMPORAL" ? "no-apto" : "rechazado");
+    $("panelDonante").classList.remove("oculto");
+    $("panelDonacion").classList.remove("oculto");
+    actualizarAyuda();
+  }
+
+  function guardar() {
+    $("panelUnidad").classList.add("oculto");
+    if (!donanteActual) return;
+
+    if (donanteActual.estado !== "APTO") {
+      mostrar($("msgDonacion"),
+        "El donante no está Apto (estado: " + NOMBRE_ESTADO[donanteActual.estado] + "). La donación no pudo ser registrada.",
+        "error");
+      return;
+    }
+    var tipo = tipoElegido();
+    var hoy = new Date();
+    var cad = new Date(hoy);
+    cad.setDate(cad.getDate() + DIAS_CADUCIDAD[tipo]);
+
+    $("uDonacion").textContent = "#" + contadorDonaciones++;
+    $("uComp").textContent = tipo === "SANGRE" ? "Sangre" : "Plaquetas";
+    $("uSangre").textContent = donanteActual.sangre;
+    $("uExtr").textContent = fmt(hoy);
+    $("uCad").textContent = fmt(cad);
+    mostrar($("msgDonacion"), "Donación de " + (tipo === "SANGRE" ? "sangre" : "plaquetas") + " registrada para " + donanteActual.nombre + ".", "exito");
+    $("panelUnidad").classList.remove("oculto");
+  }
+
+  function limpiar() {
+    ocultar();
+    donanteActual = null;
+    $("run").value = "";
+    $("run").focus();
+  }
+
+  $("btnBuscar").addEventListener("click", buscar);
+  $("run").addEventListener("keydown", function (e) { if (e.key === "Enter") buscar(); });
+  $("btnGuardar").addEventListener("click", guardar);
+  $("btnLimpiar").addEventListener("click", limpiar);
+  document.querySelectorAll("input[name=tipo]").forEach(function (r) { r.addEventListener("change", actualizarAyuda); });
+</script>
+</body>
+</html>
