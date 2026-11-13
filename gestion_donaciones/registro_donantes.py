@@ -2,12 +2,20 @@
 
 import sqlite3
 from contextlib import closing
+from datetime import date
 
 from gestion_donaciones.validaciones import normalizar_run, validar_donante
 from gestion_donaciones.modelos.donante import Donante
 from gestion_donaciones.modelos.enums import EstadoElegibilidad, GrupoSanguineo, FactorRh
 from gestion_donaciones.database import obtener_conexion
 
+
+def _fecha_a_texto(valor):
+    return valor.isoformat() if hasattr(valor, "isoformat") else valor
+
+
+def _texto_a_fecha(texto):
+    return date.fromisoformat(texto) if texto else None
 
 class RegistroDonantes:
     """Gestiona la persistencia de donantes en SQLite."""
@@ -37,7 +45,15 @@ class RegistroDonantes:
             telefono=fila["telefono"],
         )
         donante.id_donante = fila["id_donante"]
-        donante.estado_elegibilidad = EstadoElegibilidad(fila["estado_elegibilidad"])
+        donante.fecha_nacimiento = _texto_a_fecha(fila["fecha_nacimiento"])
+        donante.peso_kg = fila["peso_kg"]
+        donante.fecha_habilitacion = _texto_a_fecha(fila["fecha_habilitacion"])
+        donante.fecha_ultima_donacion = _texto_a_fecha(fila["fecha_ultima_donacion"])
+        donante.estado_elegibilidad = (
+            EstadoElegibilidad(fila["estado_elegibilidad"])
+            if fila["estado_elegibilidad"] is not None
+            else None
+        )
         donante.motivo = fila["motivo"]
         return donante
 
@@ -57,28 +73,31 @@ class RegistroDonantes:
         run_normalizado = normalizar_run(donante.run)
         if run_normalizado is None:
             return ["El RUN no es válido."]
-        
-        if donante.estado_elegibilidad is None:
-            donante.estado_elegibilidad = EstadoElegibilidad.APTO
 
+        estado = donante.estado_elegibilidad
         try:
             with closing(obtener_conexion()) as conexion:
                 with conexion:
                     cursor = conexion.execute(
                         """
                         INSERT INTO donantes (
-                            run, nombre, correo, telefono, grupo_sanguineo,
-                            factor_rh, estado_elegibilidad, motivo
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            run, nombre, correo, telefono, fecha_nacimiento, peso_kg,
+                            grupo_sanguineo, factor_rh, fecha_habilitacion,
+                            fecha_ultima_donacion, estado_elegibilidad, motivo
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
                             run_normalizado,
                             donante.nombre,
                             donante.correo,
                             donante.telefono,
+                            _fecha_a_texto(getattr(donante, "fecha_nacimiento", None)),
+                            getattr(donante, "peso_kg", None),
                             donante.grupo_sanguineo.value,
                             donante.factor_rh.value,
-                            donante.estado_elegibilidad.value,
+                            _fecha_a_texto(getattr(donante, "fecha_habilitacion", None)),
+                            _fecha_a_texto(getattr(donante, "fecha_ultima_donacion", None)),
+                            estado.value if estado is not None else None,
                             getattr(donante, "motivo", None),
                         ),
                     )

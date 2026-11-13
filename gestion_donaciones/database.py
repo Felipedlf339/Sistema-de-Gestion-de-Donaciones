@@ -19,9 +19,13 @@ def inicializar_bd() -> None:
                     nombre TEXT NOT NULL,
                     correo TEXT,
                     telefono TEXT,
+                    fecha_nacimiento TEXT,
+                    peso_kg REAL,
                     grupo_sanguineo TEXT NOT NULL,
                     factor_rh TEXT NOT NULL,
-                    estado_elegibilidad TEXT NOT NULL DEFAULT 'APTO',
+                    fecha_habilitacion TEXT,
+                    fecha_ultima_donacion TEXT,
+                    estado_elegibilidad TEXT,
                     motivo TEXT
                 )
             """)

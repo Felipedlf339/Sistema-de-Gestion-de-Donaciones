@@ -10,11 +10,11 @@
 
 <body>
     <h2>Modificar Elegibilidad</h2>
-    {% set actual = donante.estado_elegibilidad.value %}
+    {% set actual = donante.estado_elegibilidad.value if donante.estado_elegibilidad else '' %}
     {% set etiquetas = {'APTO': 'Apto', 'DIFERIDO_TEMPORAL': 'Diferido temporal', 'RECHAZADO_PERMANENTE': 'Rechazado permanente'} %}
     <div id="info-donante">
         <p><strong>Donante:</strong> {{ donante.nombre }} (RUN: {{ donante.run }})</p>
-        <p><strong>Estado actual:</strong> <span id="texto-estado" data-valor="{{ actual }}">{{ etiquetas[actual] }}</span></p>
+        <p><strong>Estado actual:</strong> <span id="texto-estado" data-valor="{{ actual }}">{{ etiquetas.get(actual, 'Sin evaluar') }}</span></p>
     </div>
     {% if usuario.cargo.name == 'ATENCION_DONANTE' %}
     <form id="form-elegibilidad">
