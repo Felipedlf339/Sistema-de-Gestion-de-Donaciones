@@ -27,10 +27,10 @@ def obtener_o_crear_donante_prueba() -> Donante:
     if donante is None:
         nuevo_donante = Donante(
             run=run_prueba,
-            nombre="Juan Perez",
+            nombre="Francisca Hidalgo",
             grupo_sanguineo=GrupoSanguineo.O,
             factor_rh=FactorRh.POSITIVO,
-            correo="juan.perez@correo.cl",
+            correo="fran.hidalgo@correo.cl",
             telefono="+56912345678",
         )
         nuevo_donante.estado_elegibilidad = EstadoElegibilidad.APTO
@@ -63,10 +63,9 @@ def actualizar_estado(datos: EstadoRequest):
     if usuario_actual.cargo != CargoPersonal.ATENCION_DONANTE:
         raise HTTPException(status_code=403, detail="Acceso denegado. Solo el Personal de atención al donante puede modificar la elegibilidad.")
 
-    if datos.nuevo_estado != EstadoElegibilidad.APTO and not (datos.motivo and datos.motivo.strip()):
+    motivo_final = (datos.motivo or "").strip()
+    if not motivo_final:
         raise HTTPException(status_code=400, detail="Debes ingresar el motivo para cambiar el estado del donante.")
-    # Si vuelve a estar apto se limpia cualquier motivo anterior
-    motivo_final = None if datos.nuevo_estado == EstadoElegibilidad.APTO else datos.motivo.strip()
 
     # Persistencia en SQLite
     donante_actual = obtener_o_crear_donante_prueba()
