@@ -193,7 +193,7 @@
                         <th>Caducidad</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tabla-stock">
                     {% for unidad in unidades %}
                     <tr>
                         <td><strong>{{ unidad.id_unidad }}</strong></td>
@@ -210,5 +210,33 @@
             </table>
         </div>
     </div>
+    <script>
+        const ws = new WebSocket("ws://127.0.0.1:8000/ws/stock");
+        const contenedorStock = document.getElementById("tabla-stock");
+
+        ws.onmessage = function(event) {
+            const unidad = JSON.parse(event.data);
+            const mensajeVacio = document.querySelector(".mensaje-vacio");
+            if (mensajeVacio) {
+                mensajeVacio.closest("tr").remove();
+            }
+
+            const nuevaFila = document.createElement("tr");
+            nuevaFila.style.backgroundColor = "#e8f5e9";
+            
+            nuevaFila.innerHTML = `
+                <td><strong>NUEVA</strong></td>
+                <td>${unidad.componente}</td>
+                <td>${unidad.grupo_sanguineo}</td>
+                <td>${unidad.caducidad}</td>
+            `;
+            
+            contenedorStock.prepend(nuevaFila);
+            setTimeout(() => {
+                nuevaFila.style.transition = "background-color 1s";
+                nuevaFila.style.backgroundColor = "";
+            }, 3000);
+        };
+    </script>
 </body>
 </html>

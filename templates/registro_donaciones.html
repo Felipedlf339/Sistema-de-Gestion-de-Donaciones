@@ -145,19 +145,8 @@
 <footer>Datos de ejemplo: 12345678-5 (Apto), 11111111-1 (Diferido temporal), 7654321-6 (Rechazado permanente)</footer>
 
 <script>
- 
-  var DIAS_CADUCIDAD = { SANGRE: 42, PLAQUETAS: 5 };
   var NOMBRE_ESTADO = { APTO: "Apto", DIFERIDO_TEMPORAL: "Diferido temporal", RECHAZADO_PERMANENTE: "Rechazado permanente" };
-
-  // temporales mientras no hay base de datos
-  var DONANTES = {
-    "12345678-5": { nombre: "Javiera Aravena Gutierrez", sangre: "A+", estado: "APTO" },
-    "11111111-1": { nombre: "Francisca Hidalgo", sangre: "O-", estado: "DIFERIDO_TEMPORAL" },
-    "7654321-6":  { nombre: "Felipe de la Fuente Llanos", sangre: "AB+", estado: "RECHAZADO_PERMANENTE" }
-  };
-  var contadorDonaciones = 1;
   var donanteActual = null;
-
   var $ = function (id) { return document.getElementById(id); };
 
   function normalizarRun(t) {
@@ -165,6 +154,7 @@
     var cuerpo = l.slice(0, -1).replace(/^0+/, "");
     return cuerpo === "" ? null : cuerpo + "-" + l.slice(-1);
   }
+
   function dv(cuerpo) {
     var suma = 0, m = 2;
     for (var i = cuerpo.length - 1; i >= 0; i--) {
@@ -174,6 +164,7 @@
     var r = 11 - (suma % 11);
     return r === 11 ? "0" : r === 10 ? "K" : String(r);
   }
+
   function runValido(t) {
     var run = normalizarRun(t);
     if (!run) return false;
@@ -182,70 +173,100 @@
     return dv(p[0]) === p[1];
   }
 
-  function fmt(d) {
+  function fmt(d_str) {
+    if (!d_str) return "";
+    var d = new Date(d_str);
     return d.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
   }
+
   function mostrar(el, msg, tipo) {
     el.textContent = msg;
     el.className = "msg " + tipo;
   }
+
   function ocultar() {
     ["msgBusqueda", "msgDonacion", "panelDonante", "panelDonacion", "panelUnidad"].forEach(function (id) {
       $(id).classList.add("oculto");
     });
   }
+
   function tipoElegido() {
     return document.querySelector("input[name=tipo]:checked").value;
   }
-  function actualizarAyuda() {
-    var t = tipoElegido();
-    $("ayudaCaducidad").textContent = "Caduca " + DIAS_CADUCIDAD[t] + " días después de la extracción.";
-  }
-
-  function buscar() {
+async function buscar() {
     ocultar();
     donanteActual = null;
     var texto = $("run").value.trim();
     if (texto === "") { mostrar($("msgBusqueda"), "Ingrese el RUN del donante.", "error"); return; }
     if (!runValido(texto)) { mostrar($("msgBusqueda"), "El RUN no es válido. Revise el número y el dígito verificador.", "error"); return; }
     var run = normalizarRun(texto);
-    var d = DONANTES[run];
-    if (!d) { mostrar($("msgBusqueda"), "No hay un donante registrado con ese RUN. Regístrelo primero.", "error"); return; }
 
-    donanteActual = { run: run, nombre: d.nombre, sangre: d.sangre, estado: d.estado };
-    $("dNombre").textContent = d.nombre;
-    $("dRun").textContent = run;
-    $("dSangre").textContent = d.sangre;
-    var est = $("dEstado");
-    est.textContent = NOMBRE_ESTADO[d.estado];
-    est.className = "estado " + (d.estado === "APTO" ? "apto" : d.estado === "DIFERIDO_TEMPORAL" ? "no-apto" : "rechazado");
-    $("panelDonante").classList.remove("oculto");
-    $("panelDonacion").classList.remove("oculto");
-    actualizarAyuda();
+    try {
+      const response = await fetch(`/donaciones/donante/${run}`);
+      const d = await response.json();
+
+      if (!response.ok) {
+        mostrar($("msgBusqueda"), d.detail || "No hay un donante registrado con ese RUN.", "error");
+        return;
+      }
+
+      donanteActual = { run: d.run, nombre: d.nombre, sangre: d.tipo_sangre, estado: d.estado };
+      $("dNombre").textContent = d.nombre;
+      $("dRun").textContent = d.run;
+      $("dSangre").textContent = d.tipo_sangre;
+      
+      var est = $("dEstado");
+      est.textContent = NOMBRE_ESTADO[d.estado] || d.estado;
+      est.className = "estado " + (d.estado === "APTO" ? "apto" : d.estado === "DIFERIDO_TEMPORAL" ? "no-apto" : "rechazado");
+      
+      $("panelDonante").classList.remove("oculto");
+      $("panelDonacion").classList.remove("oculto");
+
+    } catch (error) {
+      mostrar($("msgBusqueda"), "Error de conexión con el servidor.", "error");
+    }
   }
 
-  function guardar() {
+  async function guardar() {
     $("panelUnidad").classList.add("oculto");
     if (!donanteActual) return;
 
     if (donanteActual.estado !== "APTO") {
-      mostrar($("msgDonacion"),
-        "El donante no está Apto (estado: " + NOMBRE_ESTADO[donanteActual.estado] + "). La donación no pudo ser registrada.",
-        "error");
+      mostrar($("msgDonacion"), "El donante no está Apto. La donación no pudo ser registrada.", "error");
       return;
     }
+    
     var tipo = tipoElegido();
-    var hoy = new Date();
-    var cad = new Date(hoy);
-    cad.setDate(cad.getDate() + DIAS_CADUCIDAD[tipo]);
 
-    $("uDonacion").textContent = "#" + contadorDonaciones++;
-    $("uComp").textContent = tipo === "SANGRE" ? "Sangre" : "Plaquetas";
-    $("uSangre").textContent = donanteActual.sangre;
-    $("uExtr").textContent = fmt(hoy);
-    $("uCad").textContent = fmt(cad);
-    mostrar($("msgDonacion"), "Donación de " + (tipo === "SANGRE" ? "sangre" : "plaquetas") + " registrada para " + donanteActual.nombre + ".", "exito");
-    $("panelUnidad").classList.remove("oculto");
+    try {
+      const response = await fetch("/donaciones/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_donante: donanteActual.run,
+          tipo_donacion: tipo
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        mostrar($("msgDonacion"), result.detail || "Error al procesar la donación.", "error");
+        return;
+      }
+
+      $("uDonacion").textContent = "#" + result.id_donacion;
+      $("uComp").textContent = result.unidad.tipo_componente;
+      $("uSangre").textContent = result.unidad.tipo_sangre;
+      $("uExtr").textContent = fmt(result.unidad.fecha_extraccion);
+      $("uCad").textContent = fmt(result.unidad.fecha_caducidad);
+      
+      mostrar($("msgDonacion"), result.mensaje, "exito");
+      $("panelUnidad").classList.remove("oculto");
+
+    } catch (error) {
+      mostrar($("msgDonacion"), "Error de conexión al guardar la donación.", "error");
+    }
   }
 
   function limpiar() {
@@ -259,7 +280,6 @@
   $("run").addEventListener("keydown", function (e) { if (e.key === "Enter") buscar(); });
   $("btnGuardar").addEventListener("click", guardar);
   $("btnLimpiar").addEventListener("click", limpiar);
-  document.querySelectorAll("input[name=tipo]").forEach(function (r) { r.addEventListener("change", actualizarAyuda); });
 </script>
 </body>
 </html>
