@@ -17,6 +17,30 @@ def _fecha_a_texto(valor):
 def _texto_a_fecha(texto):
     return date.fromisoformat(texto) if texto else None
 
+
+def _fila_a_donante(fila) -> Donante:
+    donante = Donante(
+        run=fila["run"],
+        nombre=fila["nombre"],
+        grupo_sanguineo=GrupoSanguineo(fila["grupo_sanguineo"]),
+        factor_rh=FactorRh(fila["factor_rh"]),
+        correo=fila["correo"],
+        telefono=fila["telefono"],
+    )
+    donante.id_donante = fila["id_donante"]
+    donante.fecha_nacimiento = _texto_a_fecha(fila["fecha_nacimiento"])
+    donante.peso_kg = fila["peso_kg"]
+    donante.fecha_habilitacion = _texto_a_fecha(fila["fecha_habilitacion"])
+    donante.fecha_ultima_donacion = _texto_a_fecha(fila["fecha_ultima_donacion"])
+    donante.estado_elegibilidad = (
+        EstadoElegibilidad(fila["estado_elegibilidad"])
+        if fila["estado_elegibilidad"] is not None
+        else None
+    )
+    donante.motivo = fila["motivo"]
+    return donante
+
+
 class RegistroDonantes:
     """Gestiona la persistencia de donantes en SQLite."""
 
@@ -35,27 +59,14 @@ class RegistroDonantes:
         if fila is None:
             return None
 
-        # Se reconstruye el objeto Donante desde la fila de SQLite
-        donante = Donante(
-            run=fila["run"],
-            nombre=fila["nombre"],
-            grupo_sanguineo=GrupoSanguineo(fila["grupo_sanguineo"]),
-            factor_rh=FactorRh(fila["factor_rh"]),
-            correo=fila["correo"],
-            telefono=fila["telefono"],
-        )
-        donante.id_donante = fila["id_donante"]
-        donante.fecha_nacimiento = _texto_a_fecha(fila["fecha_nacimiento"])
-        donante.peso_kg = fila["peso_kg"]
-        donante.fecha_habilitacion = _texto_a_fecha(fila["fecha_habilitacion"])
-        donante.fecha_ultima_donacion = _texto_a_fecha(fila["fecha_ultima_donacion"])
-        donante.estado_elegibilidad = (
-            EstadoElegibilidad(fila["estado_elegibilidad"])
-            if fila["estado_elegibilidad"] is not None
-            else None
-        )
-        donante.motivo = fila["motivo"]
-        return donante
+        return _fila_a_donante(fila)
+
+    def listar_todos(self) -> list[Donante]:
+        with closing(obtener_conexion()) as conexion:
+            filas = conexion.execute(
+                "SELECT * FROM donantes ORDER BY nombre ASC"
+            ).fetchall()
+        return [_fila_a_donante(fila) for fila in filas]
 
     def registrar(self, donante: Donante) -> list[str]:
         # valida y guarda un donante nuevo

@@ -4,6 +4,7 @@ anyio==4.16.0
 click==8.5.1
 fastapi==0.162.2
 h11==0.16.0
+httpx
 idna==3.20
 jinja2
 opentelemetry-api==1.45.2

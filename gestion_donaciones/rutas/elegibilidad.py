@@ -43,20 +43,46 @@ def obtener_o_crear_donante_prueba() -> Donante:
 
 
 class EstadoRequest(BaseModel):
+    run: str | None = None
     nuevo_estado: EstadoElegibilidad
-    motivo:str | None = None
+    motivo: str | None = None
 
 @router.get("/elegibilidad")
-def mostrar_pantalla(request: Request):
-    donante_actual = obtener_o_crear_donante_prueba()
+def mostrar_pantalla(request: Request, run: str | None = None):
+    donantes = registro.listar_todos()
+
+    donante_actual = None
+    if run:
+        donante_actual = registro.buscar_por_run(run)
+        if not donante_actual:
+            raise HTTPException(status_code=404, detail="Donante no encontrado.")
+    elif donantes:
+        donante_actual = donantes[0]
+    else:
+        donante_actual = obtener_o_crear_donante_prueba()
+        donantes = [donante_actual]
+
     return templates.TemplateResponse(
         request=request,
         name="elegibilidad.html",
         context={
             "donante": donante_actual,
+            "donantes": donantes,
             "usuario": usuario_actual,
         },
     )
+
+@router.get("/api/elegibilidad/donante/{run}")
+def obtener_datos_donante(run: str):
+    donante = registro.buscar_por_run(run)
+    if not donante:
+        raise HTTPException(status_code=404, detail="Donante no encontrado.")
+    return {
+        "run": donante.run,
+        "nombre": donante.nombre,
+        "estado": donante.estado_elegibilidad.value if donante.estado_elegibilidad else None,
+        "motivo": donante.motivo,
+    }
 
 @router.post("/api/elegibilidad")
 def actualizar_estado(datos: EstadoRequest):
@@ -67,10 +93,14 @@ def actualizar_estado(datos: EstadoRequest):
     if not motivo_final:
         raise HTTPException(status_code=400, detail="Debes ingresar el motivo para cambiar el estado del donante.")
 
-    # Persistencia en SQLite
-    donante_actual = obtener_o_crear_donante_prueba()
+    # Si se especifica el RUN, se usa ese; de lo contrario se usa el donante por defecto (retrocompatibilidad)
+    run_objetivo = datos.run
+    if not run_objetivo:
+        donante_defecto = obtener_o_crear_donante_prueba()
+        run_objetivo = donante_defecto.run
+
     actualizado = registro.actualizar_elegibilidad(
-        run=donante_actual.run,
+        run=run_objetivo,
         nuevo_estado=datos.nuevo_estado,
         motivo=motivo_final,
     )
@@ -83,6 +113,7 @@ def actualizar_estado(datos: EstadoRequest):
 
     return {
         "mensaje": "Estado actualizado correctamente.",
+        "run": run_objetivo,
         "estado": datos.nuevo_estado.value,
         "motivo": motivo_final,
     }
