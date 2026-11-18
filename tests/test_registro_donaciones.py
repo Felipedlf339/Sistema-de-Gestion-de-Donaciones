@@ -9,6 +9,18 @@ class TestRegistroDonaciones(unittest.TestCase):
     def setUp(self):
         """Configuración inicial para el cliente de pruebas."""
         self.client = TestClient(app)
+        from gestion_donaciones.registro_donantes import RegistroDonantes
+        from gestion_donaciones.modelos import Donante, GrupoSanguineo, FactorRh
+        from gestion_donaciones.modelos.enums import EstadoElegibilidad
+
+        registro = RegistroDonantes()
+        donante = registro.buscar_por_run("12345678-5")
+        if donante is None:
+            nuevo = Donante("12345678-5", "Francisca Hidalgo", GrupoSanguineo.O, FactorRh.POSITIVO, correo="fran@correo.cl")
+            nuevo.estado_elegibilidad = EstadoElegibilidad.APTO
+            registro.registrar(nuevo)
+        else:
+            registro.actualizar_elegibilidad("12345678-5", EstadoElegibilidad.APTO, "Apto para pruebas")
 
     def test_1_registrar_donacion_sangre_apto(self):
         """Test 1: Registrar una donación de sangre con un donante Apto."""

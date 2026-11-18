@@ -30,6 +30,16 @@ def inicializar_bd() -> None:
                 )
             """)
             conexion.execute("""
+                CREATE TABLE IF NOT EXISTS personal (
+                    id_personal INTEGER PRIMARY KEY AUTOINCREMENT,
+                    run TEXT UNIQUE NOT NULL,
+                    nombre TEXT NOT NULL,
+                    correo TEXT,
+                    telefono TEXT,
+                    cargo TEXT NOT NULL
+                )
+            """)
+            conexion.execute("""
                 CREATE TABLE IF NOT EXISTS unidades (
                     id_unidad INTEGER PRIMARY KEY AUTOINCREMENT,
                     id_donacion INTEGER,

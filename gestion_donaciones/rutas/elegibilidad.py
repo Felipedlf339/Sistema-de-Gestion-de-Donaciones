@@ -20,35 +20,19 @@ usuario_actual = PersonalCentroDonacion(
     cargo=CargoPersonal.ATENCION_DONANTE # Cambiar para probar validación
 )
 
-def obtener_o_crear_donante_prueba() -> Donante:
-    run_prueba = "12345678-5"
-    donante = registro.buscar_por_run(run_prueba)
-
-    if donante is None:
-        nuevo_donante = Donante(
-            run=run_prueba,
-            nombre="Francisca Hidalgo",
-            grupo_sanguineo=GrupoSanguineo.O,
-            factor_rh=FactorRh.POSITIVO,
-            correo="fran.hidalgo@correo.cl",
-            telefono="+56912345678",
-        )
-        nuevo_donante.estado_elegibilidad = EstadoElegibilidad.APTO
-        errores = registro.registrar(nuevo_donante)
-        if errores:
-            raise HTTPException(status_code=500, detail=f"No se pudo crear el donante de prueba: {errores}")
-        donante = registro.buscar_por_run(run_prueba)
-
-    return donante
-
-
 class EstadoRequest(BaseModel):
+    run: str | None = None
     nuevo_estado: EstadoElegibilidad
-    motivo:str | None = None
+    motivo: str | None = None
 
 @router.get("/elegibilidad")
-def mostrar_pantalla(request: Request):
-    donante_actual = obtener_o_crear_donante_prueba()
+def mostrar_pantalla(request: Request, run: str | None = None):
+    donante_actual = None
+    if run:
+        donante_actual = registro.buscar_por_run(run)
+        if not donante_actual:
+            raise HTTPException(status_code=404, detail="Donante no encontrado.")
+
     return templates.TemplateResponse(
         request=request,
         name="elegibilidad.html",
@@ -58,19 +42,33 @@ def mostrar_pantalla(request: Request):
         },
     )
 
+@router.get("/api/elegibilidad/donante/{run}")
+def obtener_datos_donante(run: str):
+    donante = registro.buscar_por_run(run)
+    if not donante:
+        raise HTTPException(status_code=404, detail="Donante no encontrado.")
+    return {
+        "run": donante.run,
+        "nombre": donante.nombre,
+        "estado": donante.estado_elegibilidad.value if donante.estado_elegibilidad else None,
+        "motivo": donante.motivo,
+    }
+
 @router.post("/api/elegibilidad")
 def actualizar_estado(datos: EstadoRequest):
     if usuario_actual.cargo != CargoPersonal.ATENCION_DONANTE:
         raise HTTPException(status_code=403, detail="Acceso denegado. Solo el Personal de atención al donante puede modificar la elegibilidad.")
 
+    run_objetivo = (datos.run or "").strip()
+    if not run_objetivo:
+        raise HTTPException(status_code=400, detail="Debes indicar el RUN del donante.")
+
     motivo_final = (datos.motivo or "").strip()
     if not motivo_final:
         raise HTTPException(status_code=400, detail="Debes ingresar el motivo para cambiar el estado del donante.")
 
-    # Persistencia en SQLite
-    donante_actual = obtener_o_crear_donante_prueba()
     actualizado = registro.actualizar_elegibilidad(
-        run=donante_actual.run,
+        run=run_objetivo,
         nuevo_estado=datos.nuevo_estado,
         motivo=motivo_final,
     )
@@ -83,6 +81,7 @@ def actualizar_estado(datos: EstadoRequest):
 
     return {
         "mensaje": "Estado actualizado correctamente.",
+        "run": run_objetivo,
         "estado": datos.nuevo_estado.value,
         "motivo": motivo_final,
     }
