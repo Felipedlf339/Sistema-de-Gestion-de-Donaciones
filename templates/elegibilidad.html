@@ -87,7 +87,7 @@
     </header>
 
     <main>
-        {% set actual = donante.estado_elegibilidad.value if donante.estado_elegibilidad else '' %}
+        {% set actual = donante.estado_elegibilidad.value if (donante and donante.estado_elegibilidad) else '' %}
         {% set etiquetas = {'APTO': 'Apto', 'DIFERIDO_TEMPORAL': 'Diferido temporal', 'RECHAZADO_PERMANENTE': 'Rechazado permanente'} %}
         {% set clase_estado = 'apto' if actual == 'APTO' else 'no-apto' if actual == 'DIFERIDO_TEMPORAL' else 'rechazado' if actual == 'RECHAZADO_PERMANENTE' else 'sin-evaluar' %}
 
@@ -107,15 +107,15 @@
             <h2>Datos del donante</h2>
             <dl>
                 <dt>Nombre</dt>
-                <dd id="donante-nombre">{{ donante.nombre }}</dd>
+                <dd id="donante-nombre">{{ donante.nombre if donante else '—' }}</dd>
                 
                 <dt>RUN</dt>
-                <dd id="donante-run">{{ donante.run }}</dd>
+                <dd id="donante-run">{{ donante.run if donante else '—' }}</dd>
                 
                 <dt>Estado actual</dt>
                 <dd>
                     <span id="texto-estado" data-valor="{{ actual }}" class="estado {{ clase_estado }}">
-                        {{ etiquetas.get(actual, 'Sin evaluar') }}
+                        {{ etiquetas.get(actual, 'Sin evaluar' if donante else 'Sin donante seleccionado') }}
                     </span>
                 </dd>
             </dl>

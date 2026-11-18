@@ -92,20 +92,22 @@ class PruebaElegibilidad(unittest.TestCase):
 
     def guardar(self, estado, motivo=None):
         """Equivale a elegir un estado, escribir el motivo y presionar Guardar."""
-        datos = elegibilidad.EstadoRequest(nuevo_estado=estado, motivo=motivo)
+        datos = elegibilidad.EstadoRequest(run=RUN, nuevo_estado=estado, motivo=motivo)
         try:
             resultado = elegibilidad.actualizar_estado(datos)
         except HTTPException as error:
             return Respuesta(error.status_code, {"detail": error.detail})
         return Respuesta(200, resultado)
 
-    def pantalla(self):
+    def pantalla(self, run=RUN):
         """Devuelve el HTML que vería el usuario en /elegibilidad."""
+        path = f"/elegibilidad?run={run}" if run else "/elegibilidad"
+        query_string = f"run={run}".encode("utf-8") if run else b""
         request = Request({
-            "type": "http", "method": "GET", "path": "/elegibilidad",
-            "headers": [], "query_string": b"",
+            "type": "http", "method": "GET", "path": path,
+            "headers": [], "query_string": query_string,
         })
-        return elegibilidad.mostrar_pantalla(request).body.decode("utf-8")
+        return elegibilidad.mostrar_pantalla(request, run=run).body.decode("utf-8")
 
 
 class TestCambiarEstado(PruebaElegibilidad):

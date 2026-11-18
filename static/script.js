@@ -153,7 +153,14 @@ function iniciarFormulario() {
 
         const nuevoEstado = selectorEstado.value;
         const motivo = inputMotivo.value.trim();
-        const runSeleccionado = donanteRun ? donanteRun.innerText.trim() : (inputBuscarRun ? inputBuscarRun.value.trim() : null);
+        const runTexto = donanteRun ? donanteRun.innerText.trim() : '';
+        const runSeleccionado = (runTexto && runTexto !== '—') ? runTexto : (inputBuscarRun ? inputBuscarRun.value.trim() : null);
+
+        if (!runSeleccionado) {
+            mostrarMensaje('Debes buscar un donante por su RUN antes de guardar el estado.', 'error');
+            if (inputBuscarRun) inputBuscarRun.focus();
+            return;
+        }
 
         if (!nuevoEstado) {
             mostrarMensaje('Debes seleccionar un estado de elegibilidad.', 'error');
