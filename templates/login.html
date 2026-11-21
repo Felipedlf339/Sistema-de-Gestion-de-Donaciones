@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iniciar sesión</title>
+<style>
+  :root {
+    --sangre: #a01220;
+    --sangre-oscuro: #6b0b15;
+    --gris-fondo: #dcdee1;
+    --gris-claro: #eceef0;
+    --gris-borde: #b9bdc3;
+    --gris-texto: #33363b;
+    --gris-suave: #666b73;
+    --blanco: #fbfbfb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--gris-fondo); color: var(--gris-texto);
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  header {
+    width: 100%; background: var(--sangre); color: #fff; text-align: center;
+    border-bottom: 6px solid var(--sangre-oscuro); padding: 26px 16px 22px;
+  }
+  header h1 { margin: 0; font-size: 1.7rem; font-weight: 600; letter-spacing: .4px; }
+  header p { margin: 6px 0 0; font-size: .95rem; color: #f1d4d7; }
+
+  main { width: 100%; max-width: 420px; padding: 40px 16px 10px; }
+
+  .panel {
+    background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 3px;
+    box-shadow: 0 1px 0 var(--gris-borde);
+    padding: 22px 24px 26px; overflow: hidden;
+  }
+  .panel h2 {
+    margin: -22px -24px 20px; padding: 10px 24px; font-size: 1rem; font-weight: 600;
+    background: var(--gris-claro); color: var(--sangre-oscuro); text-align: left;
+    border-bottom: 1px solid var(--gris-borde); border-left: 5px solid var(--sangre);
+  }
+
+  .campo { margin-bottom: 16px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 10px 12px; font-size: 1rem;
+    border: 1px solid var(--gris-borde); border-radius: 3px; background: #fff; color: inherit;
+  }
+  button {
+    width: 100%; padding: 11px 22px; font-size: 1rem; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--sangre-oscuro); border-radius: 3px; background: var(--sangre); color: #fff;
+  }
+  button:hover:not(:disabled) { background: var(--sangre-oscuro); }
+  button:disabled { background: #b9a3a6; cursor: not-allowed; }
+  input:focus-visible, button:focus-visible { outline: 3px solid #d98a92; outline-offset: 2px; }
+
+  .msg { border-radius: 3px; padding: 12px 14px; margin-top: 16px; font-weight: 600; }
+  .msg.error { background: #f6e1e3; border: 1px solid var(--sangre); color: var(--sangre-oscuro); }
+  .oculto { display: none; }
+  @media (max-width: 480px) { header h1 { font-size: 1.4rem; } main { padding-top: 24px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gestión de Donaciones</h1>
+  <p>Acceso para el personal del centro de donación y de los centros médicos</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Iniciar sesión</h2>
+    <form id="formLogin" novalidate>
+      <div class="campo">
+        <label for="run">RUN</label>
+        <input type="text" id="run" placeholder="12.345.678-5" autocomplete="username" autofocus>
+      </div>
+      <div class="campo">
+        <label for="contrasena">Contraseña</label>
+        <input type="password" id="contrasena" autocomplete="current-password">
+      </div>
+      <button type="submit" id="btnIngresar">Ingresar</button>
+      <div id="msgLogin" class="msg error oculto" role="alert"></div>
+    </form>
+  </section>
+</main>
+
+<script>
+  function $(id) { return document.getElementById(id); }
+
+  function mostrarError(texto) {
+    $("msgLogin").textContent = texto;
+    $("msgLogin").classList.remove("oculto");
+  }
+
+  async function ingresar(event) {
+    event.preventDefault();
+    $("msgLogin").classList.add("oculto");
+    $("btnIngresar").disabled = true;
+
+    const datos = { run: $("run").value, contrasena: $("contrasena").value };
+
+    try {
+      const response = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      });
+
+      if (response.ok) {
+        window.location.href = "/";  // panel principal
+        return;
+      }
+
+      const result = await response.json();
+      mostrarError(typeof result.detail === "string" ? result.detail : "No se pudo iniciar sesión.");
+      $("contrasena").value = "";
+      $("contrasena").focus();
+    } catch (error) {
+      mostrarError("Error de conexión con el servidor.");
+    }
+
+    $("btnIngresar").disabled = false;
+  }
+
+  $("formLogin").addEventListener("submit", ingresar);
+</script>
+</body>
+</html>
