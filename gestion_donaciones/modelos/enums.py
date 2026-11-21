@@ -44,3 +44,7 @@ class EstadoUnidad(Enum):
 class CargoPersonal(Enum):
     ATENCION_DONANTE = "Personal de atención al donante"
     ENCARGADO_INVENTARIO = "Encargado de inventario"
+
+class EstadoSolicitud(Enum):
+    PENDIENTE = "PENDIENTE"
+    ATENDIDA = "ATENDIDA"

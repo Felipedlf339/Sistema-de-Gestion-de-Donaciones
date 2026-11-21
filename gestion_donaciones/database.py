@@ -50,3 +50,14 @@ def inicializar_bd() -> None:
                     estado TEXT NOT NULL
                 )
             """)
+            conexion.execute("""
+                CREATE TABLE IF NOT EXISTS solicitudes (
+                    id_solicitud INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_centro_medico INTEGER NOT NULL,
+                    tipo_hemoderivado TEXT NOT NULL,
+                    grupo_sanguineo TEXT NOT NULL,
+                    cantidad INTEGER NOT NULL,
+                    fecha_solicitud TEXT NOT NULL,
+                    estado TEXT NOT NULL
+                )
+            """)
