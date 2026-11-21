@@ -5,15 +5,18 @@ from gestion_donaciones.modelos.enums import EstadoUnidad
 
 DB_PATH = Path(__file__).resolve().parent / "donaciones.db"
 
+
 def obtener_conexion() -> sqlite3.Connection:
     conexion = sqlite3.connect(DB_PATH, timeout=10.0)
-    conexion.row_factory = sqlite3.Row 
+    conexion.row_factory = sqlite3.Row
     return conexion
+
 
 def agregar_columna_si_falta(conexion, tabla, columna, definicion):
     columnas = [fila["name"] for fila in conexion.execute(f"PRAGMA table_info({tabla})")]
     if columna not in columnas:
         conexion.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion}")
+
 
 def inicializar_bd() -> None:
     with closing(obtener_conexion()) as conexion:
@@ -74,6 +77,18 @@ def inicializar_bd() -> None:
                 )
             """)
             agregar_columna_si_falta(conexion, "unidades", "id_despacho", "INTEGER")
+            conexion.execute("""
+                CREATE TABLE IF NOT EXISTS solicitudes (
+                    id_solicitud INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_centro_medico INTEGER NOT NULL,
+                    tipo_hemoderivado TEXT NOT NULL,
+                    grupo_sanguineo TEXT NOT NULL,
+                    cantidad INTEGER NOT NULL,
+                    fecha_solicitud TEXT NOT NULL,
+                    estado TEXT NOT NULL
+                )
+            """)
+
 
 def reservar_unidades_despacho(
     conexion: sqlite3.Connection,
@@ -88,7 +103,7 @@ def reservar_unidades_despacho(
         return False
     if len(set(ids_unidades)) != len(ids_unidades):
         return False
-    
+
     cursor = conexion.cursor()
     try:
         if not conexion.in_transaction:

@@ -45,6 +45,9 @@ class CargoPersonal(Enum):
     ATENCION_DONANTE = "Personal de atención al donante"
     ENCARGADO_INVENTARIO = "Encargado de inventario"
 
+class EstadoSolicitud(Enum):
+    PENDIENTE = "PENDIENTE"
+    ATENDIDA = "ATENDIDA"
 class CargoMedico(Enum):
     RESPONSABLE_RECEPCION = "Responsable de recepción"
     PERSONAL_CLINICO = "Personal clínico"
