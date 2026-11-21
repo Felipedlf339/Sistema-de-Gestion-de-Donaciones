@@ -24,6 +24,15 @@
   }
   nav button:hover { color: #fff; background: rgba(255,255,255,.08); }
   nav button.activo { color: #fff; border-bottom-color: #fff; }
+  nav .usuario {
+    margin-left: auto; display: flex; align-items: center; gap: 12px;
+    color: #f1d4d7; font-size: .9rem; padding: 8px 0;
+  }
+  nav .usuario strong { color: #fff; }
+  nav .usuario form { margin: 0; }
+  nav .usuario button {
+    padding: 7px 14px; border: 1px solid #f1d4d7; border-radius: 3px; font-size: .9rem;
+  }
   iframe { flex: 1; width: 100%; border: 0; background: #dcdee1; }
 </style>
 </head>
@@ -34,13 +43,20 @@
     <button data-url="/elegibilidad">Elegibilidad</button>
     <button data-url="/donaciones/registrar">Registrar donación</button>
     <button data-url="/stock">Disponibilidad</button>
+
+    <div class="usuario">
+      <span><strong id="nombreUsuario">{{ usuario.nombre }}</strong> · {{ usuario.nombre_cargo }}{% if usuario.centro_medico %} · {{ usuario.centro_medico }}{% endif %}</span>
+      <form method="post" action="/logout">
+        <button type="submit" id="btnCerrarSesion">Cerrar sesión</button>
+      </form>
+    </div>
   </nav>
 
   <iframe id="vista" name="vista"></iframe>
 
   <script>
     const vista = document.getElementById("vista");
-    const botones = document.querySelectorAll("nav button");
+    const botones = document.querySelectorAll("nav button[data-url]");
 
     function ir(url) { vista.src = url; }
 
