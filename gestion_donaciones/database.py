@@ -1,7 +1,6 @@
 import sqlite3
 from pathlib import Path
 from contextlib import closing
-from gestion_donaciones.modelos.enums import EstadoUnidad
 
 DB_PATH = Path(__file__).resolve().parent / "donaciones.db"
 
@@ -88,52 +87,3 @@ def inicializar_bd() -> None:
                     estado TEXT NOT NULL
                 )
             """)
-
-
-def reservar_unidades_despacho(
-    conexion: sqlite3.Connection,
-    id_despacho: int,
-    ids_unidades: list[int],
-) -> bool:
-    """
-    Si alguna unidad no existe o ya no está disponible, deshace toda la operación
-    y retorna False. Si todas se reservan, confirma y retorna True.
-    """
-    if not ids_unidades:
-        return False
-    if len(set(ids_unidades)) != len(ids_unidades):
-        return False
-
-    cursor = conexion.cursor()
-    try:
-        if not conexion.in_transaction:
-            cursor.execute("BEGIN IMMEDIATE")
-
-        for id_unidad in ids_unidades:
-            cursor.execute(
-                """
-                UPDATE unidades
-                SET estado = ?,
-                    id_despacho = ?
-                WHERE id_unidad = ?
-                  AND estado = ?
-                """,
-                (
-                    EstadoUnidad.RESERVADA.value,
-                    id_despacho,
-                    id_unidad,
-                    EstadoUnidad.DISPONIBLE.value,
-                ),
-            )
-
-            if cursor.rowcount == 0:
-                conexion.rollback()
-                return False
-
-        conexion.commit()
-        return True
-
-    except sqlite3.Error:
-        if conexion.in_transaction:
-            conexion.rollback()
-        raise
