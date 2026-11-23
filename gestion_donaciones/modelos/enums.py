@@ -50,6 +50,10 @@ class EstadoSolicitud(Enum):
     PENDIENTE = "PENDIENTE"
     ATENDIDA = "ATENDIDA"
 
+class EstadoDespacho(Enum):
+    EN_TRANSITO = "EN_TRANSITO"
+    ENTREGADO = "ENTREGADO"
+    
 class CargoMedico(Enum):
     RESPONSABLE_RECEPCION = "Responsable de recepción"
     PERSONAL_CLINICO = "Personal clínico"
