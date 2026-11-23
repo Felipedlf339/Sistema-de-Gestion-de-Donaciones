@@ -43,6 +43,9 @@
     <button data-url="/elegibilidad">Elegibilidad</button>
     <button data-url="/donaciones/registrar">Registrar donación</button>
     <button data-url="/stock">Disponibilidad</button>
+    {% if usuario.centro_medico %}
+    <button data-url="/entregas">Entregas</button>
+    {% endif %}
 
     <div class="usuario">
       <span><strong id="nombreUsuario">{{ usuario.nombre }}</strong> · {{ usuario.nombre_cargo }}{% if usuario.centro_medico %} · {{ usuario.centro_medico }}{% endif %}</span>
