@@ -68,7 +68,7 @@ def inicializar_bd() -> None:
                 CREATE TABLE IF NOT EXISTS unidades (
                     id_unidad INTEGER PRIMARY KEY AUTOINCREMENT,
                     id_donacion INTEGER,
-                    id_despacho INTEGER,
+                    id_despacho INTEGER REFERENCES despachos(id_despacho),
                     tipo_componente TEXT NOT NULL,
                     tipo_sangre TEXT NOT NULL,
                     fecha_extraccion TEXT NOT NULL,
@@ -76,7 +76,13 @@ def inicializar_bd() -> None:
                     estado TEXT NOT NULL
                 )
             """)
-            agregar_columna_si_falta(conexion, "unidades", "id_despacho", "INTEGER")
+            # una sola columna y sin NOT NULL: cada unidad pertenece a lo sumo a un despacho
+            # (NULL mientras no se haya despachado)
+            agregar_columna_si_falta(conexion, "unidades", "id_despacho",
+                                     "INTEGER REFERENCES despachos(id_despacho)")
+            conexion.execute(
+                "CREATE INDEX IF NOT EXISTS idx_unidades_id_despacho ON unidades(id_despacho)"
+            )
             conexion.execute("""
                 CREATE TABLE IF NOT EXISTS solicitudes (
                     id_solicitud INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,8 +94,20 @@ def inicializar_bd() -> None:
                     estado TEXT NOT NULL
                 )
             """)
-
-
+            # id_encargado es el personal (encargado de inventario) que prepara el despacho
+            # fecha_recepcion queda NULL hasta que el centro médico recibe las unidades
+            # estado guarda el valor de EstadoDespacho (EN_TRANSITO o ENTREGADO)
+            conexion.execute("""
+                CREATE TABLE IF NOT EXISTS despachos (
+                    id_despacho INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_solicitud INTEGER NOT NULL REFERENCES solicitudes(id_solicitud),
+                    id_encargado INTEGER NOT NULL REFERENCES personal(id_personal),
+                    fecha_despacho TEXT NOT NULL,
+                    fecha_recepcion TEXT,
+                    estado TEXT NOT NULL CHECK (estado IN ('EN_TRANSITO', 'ENTREGADO'))
+                )
+            """)
+    
 def reservar_unidades_despacho(
     conexion: sqlite3.Connection,
     id_despacho: int,
