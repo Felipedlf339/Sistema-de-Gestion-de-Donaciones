@@ -82,6 +82,21 @@ def _resolver_id_centro_medico(request: Request, conexion) -> int:
     return ID_CENTRO_MEDICO_POR_DEFECTO
 
 
+def _obtener_solicitudes_centro(conexion, id_centro_medico: int):
+    """Obtiene las solicitudes del centro médico ordenadas de más reciente a más antigua."""
+    cursor = conexion.cursor()
+    cursor.execute(
+        """
+        SELECT id_solicitud, tipo_hemoderivado, grupo_sanguineo, cantidad, fecha_solicitud, estado
+        FROM solicitudes
+        WHERE id_centro_medico = ?
+        ORDER BY fecha_solicitud DESC, id_solicitud DESC
+        """,
+        (id_centro_medico,),
+    )
+    return cursor.fetchall()
+
+
 @router.get("/stock", response_class=HTMLResponse)
 def consultar_disponibilidad(
     request: Request,
@@ -92,6 +107,8 @@ def consultar_disponibilidad(
 ):
     conexion = obtener_conexion()
     unidades_db = _obtener_unidades_disponibles(conexion, tipo, grupo, rh, vence_antes_de)
+    id_centro_medico = _resolver_id_centro_medico(request, conexion)
+    solicitudes_db = _obtener_solicitudes_centro(conexion, id_centro_medico)
     conexion.close()
 
     return templates.TemplateResponse(
@@ -100,6 +117,7 @@ def consultar_disponibilidad(
         context={
             "request": request,
             "unidades": unidades_db,
+            "solicitudes": solicitudes_db,
         },
     )
 
@@ -116,9 +134,11 @@ def solicitar_stock(
     cantidad_texto = (cantidad or "").strip()
 
     conexion = obtener_conexion()
+    id_centro_medico = _resolver_id_centro_medico(request, conexion)
 
     def _responder_error(mensaje: str):
         unidades_db = _obtener_unidades_disponibles(conexion)
+        solicitudes_db = _obtener_solicitudes_centro(conexion, id_centro_medico)
         conexion.close()
         return templates.TemplateResponse(
             request=request,
@@ -127,6 +147,7 @@ def solicitar_stock(
             context={
                 "request": request,
                 "unidades": unidades_db,
+                "solicitudes": solicitudes_db,
                 "mensaje_error": mensaje,
                 "form_tipo": tipo_limpio,
                 "form_grupo": grupo_limpio,
@@ -169,7 +190,6 @@ def solicitar_stock(
             f"Stock insuficiente: solo hay {disponibles} disponibles de {tipo_limpio} ({grupo_limpio})."
         )
 
-    id_centro_medico = _resolver_id_centro_medico(request, conexion)
     solicitud = SolicitudStock(
         id_centro_medico=id_centro_medico,
         tipo_hemoderivado=tipo_limpio,
@@ -203,6 +223,7 @@ def solicitar_stock(
         )
 
     unidades_db = _obtener_unidades_disponibles(conexion)
+    solicitudes_db = _obtener_solicitudes_centro(conexion, id_centro_medico)
     conexion.close()
 
     return templates.TemplateResponse(
@@ -211,6 +232,7 @@ def solicitar_stock(
         context={
             "request": request,
             "unidades": unidades_db,
+            "solicitudes": solicitudes_db,
             "mensaje_exito": (
                 f"Solicitud registrada en estado Pendiente: {cantidad_int} unidad(es) de "
                 f"{tipo_limpio} ({grupo_limpio})."
