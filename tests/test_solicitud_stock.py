@@ -6,6 +6,14 @@ from fastapi.testclient import TestClient
 import gestion_donaciones.database as db
 from gestion_donaciones.modelos import EstadoSolicitud, SolicitudStock
 from main import app
+from gestion_donaciones.rutas import permisos
+
+
+def usuario_centro_medico():
+    # reemplaza al usuario de la sesión: solicitar stock es del personal de centro médico (T28)
+    return {"id_personal": 1, "run": "18888888-7", "nombre": "Prueba",
+            "cargo": "RESPONSABLE_RECEPCION", "nombre_cargo": "Responsable de recepción",
+            "centro_medico": "Hospital Regional de Concepción"}
 
 
 @pytest.fixture
@@ -42,7 +50,9 @@ def cliente_bd_temporal(tmp_path, monkeypatch):
         )
     conexion.close()
 
-    return TestClient(app)
+    app.dependency_overrides[permisos.obtener_usuario] = usuario_centro_medico
+    yield TestClient(app)
+    app.dependency_overrides.clear()
 
 
 def test_estados_solicitud():
