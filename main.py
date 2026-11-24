@@ -1,11 +1,11 @@
 import os
 
-from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import RedirectResponse
+from fastapi import Depends, FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from gestion_donaciones.rutas import disponibilidad, elegibilidad, registro_donaciones, sesion, entregas
+from gestion_donaciones.rutas import disponibilidad, elegibilidad, permisos, registro_donaciones, sesion, entregas
 from gestion_donaciones.rutas import registro_donantes as rutas_donantes
 from gestion_donaciones.database import inicializar_bd
 
@@ -42,12 +42,39 @@ async def notificar_nuevo_stock(datos_unidad: dict):
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.include_router(disponibilidad.router)
-app.include_router(elegibilidad.router)
-app.include_router(registro_donaciones.router)
-app.include_router(rutas_donantes.router)
+# todas las pantallas piden sesión y un cargo autorizado (ver rutas/permisos.py)
+# el inicio y cierre de sesión quedan libres
+con_permiso = [Depends(permisos.verificar_acceso)]
+app.include_router(disponibilidad.router, dependencies=con_permiso)
+app.include_router(elegibilidad.router, dependencies=con_permiso)
+app.include_router(registro_donaciones.router, dependencies=con_permiso)
+app.include_router(rutas_donantes.router, dependencies=con_permiso)
 app.include_router(sesion.router)
 app.include_router(entregas.router)
+
+
+@app.exception_handler(permisos.SinSesion)
+def responder_sin_sesion(request: Request, error):
+    # al abrir una pantalla se envía al inicio de sesión; a un fetch() se le responde 401
+    if permisos.quiere_html(request):
+        return RedirectResponse("/login", status_code=303)
+    return JSONResponse({"detail": permisos.MENSAJE_SIN_SESION}, status_code=401)
+
+
+@app.exception_handler(permisos.AccesoDenegado)
+def responder_acceso_denegado(request: Request, error):
+    if permisos.quiere_html(request):
+        return templates.TemplateResponse(
+            request=request,
+            name="acceso_denegado.html",
+            context={
+                "usuario": sesion.usuario_en_sesion(request),
+                "mensaje": permisos.MENSAJE_ACCESO_DENEGADO,
+            },
+            status_code=403,
+        )
+    return JSONResponse({"detail": permisos.MENSAJE_ACCESO_DENEGADO}, status_code=403)
+
 
 @app.get("/")
 def inicio(request: Request):
@@ -55,5 +82,7 @@ def inicio(request: Request):
     if usuario is None:
         return RedirectResponse("/login", status_code=303)
     return templates.TemplateResponse(
-        request=request, name="panel_principal.html", context={"usuario": usuario}
+        request=request,
+        name="panel_principal.html",
+        context={"usuario": usuario, "opciones": permisos.opciones_del_menu(usuario)},
     )

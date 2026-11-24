@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acceso denegado</title>
+<style>
+  :root {
+    --sangre: #a01220;
+    --sangre-oscuro: #6b0b15;
+    --gris-fondo: #dcdee1;
+    --gris-claro: #eceef0;
+    --gris-borde: #b9bdc3;
+    --gris-texto: #33363b;
+    --blanco: #fbfbfb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--gris-fondo); color: var(--gris-texto);
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  main { width: 100%; max-width: 560px; padding: 40px 16px; }
+  .panel {
+    background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 3px;
+    box-shadow: 0 1px 0 var(--gris-borde); padding: 22px 24px 24px; overflow: hidden;
+  }
+  .panel h2 {
+    margin: -22px -24px 18px; padding: 10px 24px; font-size: 1rem; font-weight: 600;
+    background: var(--gris-claro); color: var(--sangre-oscuro);
+    border-bottom: 1px solid var(--gris-borde); border-left: 5px solid var(--sangre);
+  }
+  .msg {
+    border-radius: 3px; padding: 12px 14px; font-weight: 600;
+    background: #f8e1e3; color: var(--sangre-oscuro); border: 1px solid #e3a9af;
+  }
+  p { line-height: 1.5; }
+</style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h2>Acceso denegado</h2>
+      <div class="msg" id="msgAccesoDenegado">{{ mensaje }}</div>
+      {% if usuario %}
+      <p>Ingresó como <strong>{{ usuario.nombre }}</strong> ({{ usuario.nombre_cargo }}). Use las opciones del menú superior, que muestran solo las pantallas de su cargo.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

@@ -1,9 +1,25 @@
 ﻿from datetime import date, timedelta
+import pytest
 from fastapi.testclient import TestClient
 from main import app
 from gestion_donaciones.database import obtener_conexion
+from gestion_donaciones.rutas import permisos
 
 client = TestClient(app)
+
+
+def usuario_encargado_inventario():
+    # reemplaza al usuario de la sesión: la consulta de stock pide un cargo autorizado (T28)
+    return {"id_personal": 1, "run": "16666666-K", "nombre": "Prueba",
+            "cargo": "ENCARGADO_INVENTARIO", "nombre_cargo": "Encargado de inventario",
+            "centro_medico": None}
+
+
+@pytest.fixture(autouse=True)
+def sesion_de_prueba():
+    app.dependency_overrides[permisos.obtener_usuario] = usuario_encargado_inventario
+    yield
+    app.dependency_overrides.clear()
 
 
 def _preparar_datos_stock():
