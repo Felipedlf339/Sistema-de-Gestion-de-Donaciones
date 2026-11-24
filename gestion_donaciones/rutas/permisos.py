@@ -18,9 +18,10 @@ PERMISOS = [
     ("/elegibilidad", [ATENCION_DONANTE]),
     ("/api/elegibilidad", [ATENCION_DONANTE]),
     ("/donaciones", [ATENCION_DONANTE]),
+    ("/despachos/recepcion", CENTRO_MEDICO),
+    ("/despachos", [ENCARGADO_INVENTARIO]),
     ("/stock/solicitar", CENTRO_MEDICO),
     ("/stock", [ENCARGADO_INVENTARIO] + CENTRO_MEDICO),
-    ("/despachos", [ENCARGADO_INVENTARIO]),
 ]
 
 # botones del panel principal: (ruta, texto)
@@ -28,8 +29,9 @@ OPCIONES_MENU = [
     ("/donantes/registrar", "Registrar donante"),
     ("/elegibilidad", "Elegibilidad"),
     ("/donaciones/registrar", "Registrar donación"),
-    ("/stock", "Disponibilidad"),
     ("/despachos/pendientes", "Despachos"),
+    ("/despachos/recepcion", "Recepción"),
+    ("/stock", "Disponibilidad"),
 ]
 
 MENSAJE_SIN_SESION = "Debe iniciar sesión."
