@@ -15,7 +15,6 @@ from gestion_donaciones.modelos.enums import (
     FactorRh,
     GrupoSanguineo,
 )
-from gestion_donaciones.modelos.personalCentroDonacion import PersonalCentroDonacion
 from gestion_donaciones.registro_donantes import RegistroDonantes
 from gestion_donaciones.rutas import elegibilidad
 
@@ -27,9 +26,15 @@ RECHAZADO = EstadoElegibilidad("RECHAZADO_PERMANENTE")
 
 
 def crear_usuario(cargo):
-    return PersonalCentroDonacion(
-        run="77777777-7", nombre="Gustavo", id_personal="P-001", cargo=cargo
-    )
+    # mismo formato que guarda el inicio de sesión en request.session["usuario"]
+    return {
+        "id_personal": 1,
+        "run": "77777777-7",
+        "nombre": "Gustavo",
+        "cargo": cargo.name,
+        "nombre_cargo": cargo.value,
+        "centro_medico": None,
+    }
 
 class Respuesta:
     """Imita lo mínimo de una respuesta HTTP para no cambiar las pruebas."""
@@ -73,9 +78,7 @@ class PruebaElegibilidad(unittest.TestCase):
 
     # ---- utilidades ----
     def fijar_usuario(self, cargo):
-        parche = patch.object(elegibilidad, "usuario_actual", crear_usuario(cargo))
-        parche.start()
-        self.addCleanup(parche.stop)
+        self.usuario = crear_usuario(cargo)
 
     def otro_cargo(self):
         otros = [c for c in CargoPersonal if c != CargoPersonal.ATENCION_DONANTE]
@@ -94,7 +97,7 @@ class PruebaElegibilidad(unittest.TestCase):
         """Equivale a elegir un estado, escribir el motivo y presionar Guardar."""
         datos = elegibilidad.EstadoRequest(run=RUN, nuevo_estado=estado, motivo=motivo)
         try:
-            resultado = elegibilidad.actualizar_estado(datos)
+            resultado = elegibilidad.actualizar_estado(datos, usuario=self.usuario)
         except HTTPException as error:
             return Respuesta(error.status_code, {"detail": error.detail})
         return Respuesta(200, resultado)
@@ -107,7 +110,9 @@ class PruebaElegibilidad(unittest.TestCase):
             "type": "http", "method": "GET", "path": path,
             "headers": [], "query_string": query_string,
         })
-        return elegibilidad.mostrar_pantalla(request, run=run).body.decode("utf-8")
+        return elegibilidad.mostrar_pantalla(
+            request, run=run, usuario=self.usuario
+        ).body.decode("utf-8")
 
 
 class TestCambiarEstado(PruebaElegibilidad):
