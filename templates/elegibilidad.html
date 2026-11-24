@@ -121,7 +121,7 @@
             </dl>
         </section>
 
-        {% if usuario.cargo.name == 'ATENCION_DONANTE' %}
+        {% if usuario and usuario.cargo == 'ATENCION_DONANTE' %}
         <section class="panel">
             <h2>Actualizar estado</h2>
             <form id="form-elegibilidad">
@@ -146,7 +146,7 @@
         </section>
         {% else %}
         <div class="msg error">
-            <p><strong>Acceso denegado:</strong> Tu cargo de "{{ usuario.cargo.value }}" no tiene permisos para modificar la elegibilidad de los donantes.</p>
+            <p><strong>Acceso denegado:</strong> Tu cargo de "{{ usuario.nombre_cargo if usuario else 'sin sesión' }}" no tiene permisos para modificar la elegibilidad de los donantes.</p>
         </div>
         {% endif %}
     </main>
