@@ -3,11 +3,20 @@
 import unittest
 from fastapi.testclient import TestClient
 from main import app
+from gestion_donaciones.rutas import permisos
+
+
+def usuario_atencion_donante():
+    # reemplaza al usuario de la sesión: el registro de donaciones es de atención al donante (T28)
+    return {"id_personal": 1, "run": "15555555-6", "nombre": "Prueba",
+            "cargo": "ATENCION_DONANTE", "nombre_cargo": "Atención al donante", "centro_medico": None}
 
 class TestRegistroDonaciones(unittest.TestCase):
     
     def setUp(self):
         """Configuración inicial para el cliente de pruebas."""
+        app.dependency_overrides[permisos.obtener_usuario] = usuario_atencion_donante
+        self.addCleanup(app.dependency_overrides.clear)
         self.client = TestClient(app)
         from gestion_donaciones.registro_donantes import RegistroDonantes
         from gestion_donaciones.modelos import Donante, GrupoSanguineo, FactorRh

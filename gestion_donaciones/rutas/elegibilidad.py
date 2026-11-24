@@ -1,24 +1,17 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from gestion_donaciones.modelos.enums import EstadoElegibilidad, GrupoSanguineo, FactorRh, CargoPersonal
 from gestion_donaciones.modelos.donante import Donante
-from gestion_donaciones.modelos.personalCentroDonacion import PersonalCentroDonacion
 from gestion_donaciones.registro_donantes import RegistroDonantes
+from gestion_donaciones.rutas.permisos import obtener_usuario
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 registro = RegistroDonantes()
 
-# Mock de sesion
-usuario_actual = PersonalCentroDonacion(
-    run="77777777-7", 
-    nombre="Gustavo", 
-    id_personal="P-001", 
-    cargo=CargoPersonal.ATENCION_DONANTE # Cambiar para probar validación
-)
 
 class EstadoRequest(BaseModel):
     run: str | None = None
@@ -26,7 +19,8 @@ class EstadoRequest(BaseModel):
     motivo: str | None = None
 
 @router.get("/elegibilidad")
-def mostrar_pantalla(request: Request, run: str | None = None):
+def mostrar_pantalla(request: Request, run: str | None = None, usuario=Depends(obtener_usuario)):
+    # usuario es el de la sesión (T28); antes era un usuario fijo
     donante_actual = None
     if run:
         donante_actual = registro.buscar_por_run(run)
@@ -38,7 +32,7 @@ def mostrar_pantalla(request: Request, run: str | None = None):
         name="elegibilidad.html",
         context={
             "donante": donante_actual,
-            "usuario": usuario_actual,
+            "usuario": usuario,
         },
     )
 
@@ -55,8 +49,9 @@ def obtener_datos_donante(run: str):
     }
 
 @router.post("/api/elegibilidad")
-def actualizar_estado(datos: EstadoRequest):
-    if usuario_actual.cargo != CargoPersonal.ATENCION_DONANTE:
+def actualizar_estado(datos: EstadoRequest, usuario=Depends(obtener_usuario)):
+    # main.py ya revisa el cargo; se vuelve a revisar aquí por si se llama la función directo
+    if usuario is None or usuario.get("cargo") != CargoPersonal.ATENCION_DONANTE.name:
         raise HTTPException(status_code=403, detail="Acceso denegado. Solo el Personal de atención al donante puede modificar la elegibilidad.")
 
     run_objetivo = (datos.run or "").strip()
