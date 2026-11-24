@@ -157,6 +157,24 @@
 
         td strong { color: var(--primary-color); }
 
+        .estado-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .estado-pendiente {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .estado-atendida {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
         .mensaje-vacio { 
             text-align: center; 
             color: #64748b; 
@@ -281,6 +299,42 @@
 
             <button type="submit">Solicitar Unidades</button>
         </form>
+
+        <h3>Solicitudes del Centro Médico</h3>
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Grupo Sanguíneo</th>
+                        <th>Cantidad</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-solicitudes">
+                    {% for sol in solicitudes %}
+                    <tr>
+                        <td>{{ sol.tipo_hemoderivado }}</td>
+                        <td>{{ sol.grupo_sanguineo }}</td>
+                        <td>{{ sol.cantidad }}</td>
+                        <td>{{ sol.fecha_solicitud }}</td>
+                        <td>
+                            {% set es_atendida = sol.estado|upper == "ATENDIDA" %}
+                            {% set estado_legible = "Atendida" if es_atendida else "Pendiente" %}
+                            <span class="estado-badge {{ 'estado-atendida' if es_atendida else 'estado-pendiente' }}">
+                                {{ estado_legible }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="mensaje-vacio">No hay solicitudes registradas para este centro médico.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     <script>
         const ws = new WebSocket("ws://127.0.0.1:8000/ws/stock");
@@ -288,7 +342,7 @@
 
         ws.onmessage = function(event) {
             const unidad = JSON.parse(event.data);
-            const mensajeVacio = document.querySelector(".mensaje-vacio");
+            const mensajeVacio = document.querySelector("#tabla-stock .mensaje-vacio");
             if (mensajeVacio) {
                 mensajeVacio.closest("tr").remove();
             }
