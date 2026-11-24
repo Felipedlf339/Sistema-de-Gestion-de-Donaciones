@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from gestion_donaciones.rutas import disponibilidad, elegibilidad, permisos, registro_donaciones, sesion, entregas
 from gestion_donaciones.rutas import registro_donantes as rutas_donantes
 from gestion_donaciones.database import inicializar_bd
+from gestion_donaciones.rutas import disponibilidad, elegibilidad, registro_donaciones, despachos
 
 inicializar_bd()
 app = FastAPI(title="Sistema de Gestión de Donaciones")
