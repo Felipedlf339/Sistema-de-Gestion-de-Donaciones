@@ -29,6 +29,29 @@ def insertar_datos_prueba():
             INSERT OR IGNORE INTO unidades (id_donacion, tipo_componente, tipo_sangre, fecha_extraccion, fecha_caducidad, estado)
             VALUES (?, ?, ?, ?, ?, ?)
         """, unidades)
+
+    if cursor.execute("SELECT COUNT(*) FROM centros_medicos").fetchone()[0] == 0:
+        cursor.executemany(
+            "INSERT INTO centros_medicos (nombre, direccion) VALUES (?, ?)",
+            [
+                ("Hospital Regional de Concepción", "San Martín 1436"),
+                ("Clínica Biobío", "Av. Jorge Alessandri 3515"),
+            ],
+        )
+    if cursor.execute("SELECT COUNT(*) FROM solicitudes").fetchone()[0] == 0:
+        cursor.executemany(
+            """
+            INSERT INTO solicitudes
+                (id_centro_medico, tipo_hemoderivado, grupo_sanguineo, cantidad, fecha_solicitud, estado)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (2, 'Plaquetas', 'O+', 2, '2026-11-20T14:30:00', 'PENDIENTE'),
+                (1, 'Sangre', 'A+', 3, '2026-11-18T09:15:00', 'PENDIENTE'),
+                (1, 'Plasma', 'O-', 1, '2026-11-15T16:00:00', 'ATENDIDA'),
+                (2, 'Sangre', 'B+', 4, '2026-11-19T11:45:00', 'PENDIENTE'),
+            ],
+        )
         
     conexion.commit()
     conexion.close()

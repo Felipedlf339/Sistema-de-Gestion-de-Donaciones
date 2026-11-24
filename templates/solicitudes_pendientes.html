@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitudes pendientes de despacho</title>
+    <style>
+        :root {
+            --primary-color: #d32f2f;
+            --bg-body: #f4f6f8;
+            --bg-card: #ffffff;
+            --text-main: #2c3e50;
+            --border-light: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .contenedor {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: var(--bg-card);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitulo {
+            color: #64748b;
+            margin: 0 0 24px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .tabla-contenedor {
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+
+        table { width: 100%; border-collapse: collapse; background-color: white; }
+
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+
+        th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background-color: #f1f5f9; }
+
+        td strong { color: var(--primary-color); }
+
+        .btn-despachar {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .btn-despachar:hover { background-color: #b71c1c; }
+
+        .mensaje-vacio {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h2>Solicitudes pendientes de despacho</h2>
+        <p class="subtitulo">De todos los centros médicos, de la más antigua a la más reciente.</p>
+
+        <div class="tabla-contenedor">
+            {% if solicitudes %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Centro médico</th>
+                        <th>Tipo</th>
+                        <th>Grupo sanguíneo</th>
+                        <th>Cantidad</th>
+                        <th>Fecha de solicitud</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-solicitudes">
+                    {% for solicitud in solicitudes %}
+                    <tr data-id-solicitud="{{ solicitud.id_solicitud }}">
+                        <td>{{ solicitud.centro_medico }}</td>
+                        <td>{{ solicitud.tipo }}</td>
+                        <td><strong>{{ solicitud.grupo_sanguineo }}</strong></td>
+                        <td>{{ solicitud.cantidad }}</td>
+                        <td>{{ solicitud.fecha }}</td>
+                        <td>
+                            <a class="btn-despachar" href="/despachos/nuevo?solicitud={{ solicitud.id_solicitud }}">Despachar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="mensaje-vacio">No hay solicitudes por despachar.</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
