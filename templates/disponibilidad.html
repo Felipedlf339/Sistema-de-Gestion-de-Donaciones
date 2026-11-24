@@ -35,9 +35,37 @@
             margin-top: 0;
             font-size: 26px;
             font-weight: 600;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             border-bottom: 2px solid var(--border-light);
             padding-bottom: 15px;
+        }
+
+        h3 {
+            color: var(--text-main);
+            margin-top: 32px;
+            margin-bottom: 14px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .alerta {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .alerta-exito {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alerta-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
         
         .caja-filtros { 
@@ -129,6 +157,24 @@
 
         td strong { color: var(--primary-color); }
 
+        .estado-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .estado-pendiente {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .estado-atendida {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
         .mensaje-vacio { 
             text-align: center; 
             color: #64748b; 
@@ -140,6 +186,14 @@
 <body>
     <div class="contenedor">
         <h2>Stock Disponible de Hemocomponentes</h2>
+
+        {% if mensaje_exito %}
+        <div class="alerta alerta-exito" role="status">{{ mensaje_exito }}</div>
+        {% endif %}
+
+        {% if mensaje_error %}
+        <div class="alerta alerta-error" role="alert">{{ mensaje_error }}</div>
+        {% endif %}
         
         <form method="GET" action="/stock" class="caja-filtros">
            <div class="grupo-filtro">
@@ -209,6 +263,78 @@
                 </tbody>
             </table>
         </div>
+
+        <h3>Solicitar Stock de Hemocomponentes</h3>
+        <form method="POST" action="/stock/solicitar" class="caja-filtros" id="form-solicitud-stock">
+            <div class="grupo-filtro">
+                <label for="tipo_hemoderivado">Tipo de hemoderivado:</label>
+                <select name="tipo_hemoderivado" id="tipo_hemoderivado">
+                    <option value="">Seleccione componente...</option>
+                    {% for comp in ["Sangre", "Plaquetas", "Plasma", "Glóbulos Rojos"] %}
+                    <option value="{{ comp }}" {% if form_tipo == comp %}selected{% endif %}>{{ comp }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grupo-filtro">
+                <label for="grupo_sanguineo">Grupo sanguíneo:</label>
+                <select name="grupo_sanguineo" id="grupo_sanguineo">
+                    <option value="">Seleccione grupo...</option>
+                    {% for gs in ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] %}
+                    <option value="{{ gs }}" {% if form_grupo == gs %}selected{% endif %}>{{ gs }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grupo-filtro">
+                <label for="cantidad">Cantidad:</label>
+                <input type="number"
+                       name="cantidad"
+                       id="cantidad"
+                       min="1"
+                       placeholder="Ej: 2"
+                       value="{{ form_cantidad or '' }}"
+                       style="min-width: 110px;">
+            </div>
+
+            <button type="submit">Solicitar Unidades</button>
+        </form>
+
+        <h3>Solicitudes del Centro Médico</h3>
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Grupo Sanguíneo</th>
+                        <th>Cantidad</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-solicitudes">
+                    {% for sol in solicitudes %}
+                    <tr>
+                        <td>{{ sol.tipo_hemoderivado }}</td>
+                        <td>{{ sol.grupo_sanguineo }}</td>
+                        <td>{{ sol.cantidad }}</td>
+                        <td>{{ sol.fecha_solicitud }}</td>
+                        <td>
+                            {% set es_atendida = sol.estado|upper == "ATENDIDA" %}
+                            {% set estado_legible = "Atendida" if es_atendida else "Pendiente" %}
+                            <span class="estado-badge {{ 'estado-atendida' if es_atendida else 'estado-pendiente' }}">
+                                {{ estado_legible }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="mensaje-vacio">No hay solicitudes registradas para este centro médico.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
     <script>
         const ws = new WebSocket("ws://127.0.0.1:8000/ws/stock");
@@ -216,7 +342,7 @@
 
         ws.onmessage = function(event) {
             const unidad = JSON.parse(event.data);
-            const mensajeVacio = document.querySelector(".mensaje-vacio");
+            const mensajeVacio = document.querySelector("#tabla-stock .mensaje-vacio");
             if (mensajeVacio) {
                 mensajeVacio.closest("tr").remove();
             }
