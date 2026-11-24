@@ -88,6 +88,9 @@
 </main>
 
 <script>
+  // si la sesión venció dentro del panel, el login se abre en la ventana completa y no en el iframe
+  if (window.top !== window.self) { window.top.location.href = "/login"; }
+
   function $(id) { return document.getElementById(id); }
 
   function mostrarError(texto) {
