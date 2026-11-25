@@ -58,6 +58,12 @@ class TestPuedeAcceder(unittest.TestCase):
         self.assertFalse(permisos.puede_acceder(INVENTARIO, "/stock/solicitar"))
         self.assertFalse(permisos.puede_acceder(INVENTARIO, "/api/elegibilidad"))
 
+    def test_despachos_solo_encargado_de_inventario(self):
+        self.assertTrue(permisos.puede_acceder(INVENTARIO, "/despachos/pendientes"))
+        for otro in (ATENCION, RECEPCION, CLINICO):
+            with self.subTest(cargo=otro["cargo"]):
+                self.assertFalse(permisos.puede_acceder(otro, "/despachos/pendientes"))
+
     def test_personal_de_centro_medico(self):
         for medico in (RECEPCION, CLINICO):
             with self.subTest(cargo=medico["cargo"]):
@@ -77,7 +83,7 @@ class TestOpcionesDelMenu(unittest.TestCase):
             self.rutas(ATENCION),
             ["/donantes/registrar", "/elegibilidad", "/donaciones/registrar"],
         )
-        self.assertEqual(self.rutas(INVENTARIO), ["/stock"])
+        self.assertEqual(self.rutas(INVENTARIO), ["/stock", "/despachos/pendientes"])
         self.assertEqual(self.rutas(RECEPCION), ["/stock"])
         self.assertEqual(self.rutas(CLINICO), ["/stock"])
 
