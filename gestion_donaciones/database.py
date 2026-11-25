@@ -65,6 +65,14 @@ def inicializar_bd() -> None:
                                      "INTEGER REFERENCES centros_medicos(id_centro_medico)")
             agregar_columna_si_falta(conexion, "personal", "contrasena_hash", "TEXT")
             conexion.execute("""
+                CREATE TABLE IF NOT EXISTS donaciones (
+                    id_donacion INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_donante INTEGER NOT NULL REFERENCES donantes(id_donante),
+                    tipo_donacion TEXT NOT NULL,
+                    fecha_hora TEXT NOT NULL
+                )
+            """)
+            conexion.execute("""
                 CREATE TABLE IF NOT EXISTS unidades (
                     id_unidad INTEGER PRIMARY KEY AUTOINCREMENT,
                     id_donacion INTEGER,
@@ -104,9 +112,13 @@ def inicializar_bd() -> None:
                     id_encargado INTEGER NOT NULL REFERENCES personal(id_personal),
                     fecha_despacho TEXT NOT NULL,
                     fecha_recepcion TEXT,
+                    id_personal_receptor INTEGER REFERENCES personal(id_personal),
                     estado TEXT NOT NULL CHECK (estado IN ('EN_TRANSITO', 'ENTREGADO'))
                 )
             """)
+            # persona del centro médico que confirmó la recepción (HU-11)
+            agregar_columna_si_falta(conexion, "despachos", "id_personal_receptor",
+                                     "INTEGER REFERENCES personal(id_personal)")
     
 def reservar_unidades_despacho(
     conexion: sqlite3.Connection,

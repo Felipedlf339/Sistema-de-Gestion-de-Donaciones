@@ -43,7 +43,7 @@
     {% for opcion in opciones %}
     <button data-url="{{ opcion.url }}">{{ opcion.texto }}</button>
     {% endfor %}
-
+    
     <div class="usuario">
       <span><strong id="nombreUsuario">{{ usuario.nombre }}</strong> · {{ usuario.nombre_cargo }}{% if usuario.centro_medico %} · {{ usuario.centro_medico }}{% endif %}</span>
       <form method="post" action="/logout">
