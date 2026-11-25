@@ -40,6 +40,7 @@ class EstadoUnidad(Enum):
     RESERVADA = "RESERVADA"
     UTILIZADA = "UTILIZADA"
     CADUCADA = "CADUCADA"
+    ENTREGADA = "ENTREGADA"
 
 class CargoPersonal(Enum):
     ATENCION_DONANTE = "Personal de atención al donante"
@@ -56,3 +57,7 @@ class EstadoDespacho(Enum):
 class CargoMedico(Enum):
     RESPONSABLE_RECEPCION = "Responsable de recepción"
     PERSONAL_CLINICO = "Personal clínico"
+
+class EstadoDespacho(Enum):
+    EN_TRANSITO = "EN_TRANSITO"
+    ENTREGADO = "ENTREGADO"
