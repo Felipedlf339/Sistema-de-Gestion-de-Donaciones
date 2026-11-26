@@ -1,12 +1,18 @@
 from contextlib import closing
 from datetime import datetime
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from gestion_donaciones.database import obtener_conexion
+from gestion_donaciones.despacho_solicitudes import (
+    ErrorDespacho,
+    SolicitudNoEncontrada,
+    despachar_solicitud,
+)
 from gestion_donaciones.modelos.enums import EstadoSolicitud
+from gestion_donaciones.rutas.permisos import obtener_usuario
 
 router = APIRouter(prefix="/despachos", tags=["Despachos"])
 templates = Jinja2Templates(directory="templates")
@@ -54,3 +60,21 @@ def ver_solicitudes_pendientes(request: Request):
         name="solicitudes_pendientes.html",
         context={"solicitudes": obtener_solicitudes_pendientes()},
     )
+
+
+@router.post("/solicitudes/{id_solicitud}/despachar")
+def despachar(id_solicitud: int, usuario=Depends(obtener_usuario)):
+    """Despacha la solicitud con las unidades que vencen antes (asignación automática)"""
+    try:
+        resultado = despachar_solicitud(id_solicitud, usuario["id_personal"])
+    except SolicitudNoEncontrada as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except ErrorDespacho as error:  
+        raise HTTPException(status_code=409, detail=str(error))
+
+    return {
+        "id_despacho": resultado.despacho.id_despacho,
+        "id_solicitud": id_solicitud,
+        "estado": resultado.despacho.estado.value,
+        "unidades": resultado.ids_unidades,
+    }

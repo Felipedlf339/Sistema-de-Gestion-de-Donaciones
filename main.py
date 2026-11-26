@@ -50,6 +50,7 @@ app.include_router(disponibilidad.router, dependencies=con_permiso)
 app.include_router(elegibilidad.router, dependencies=con_permiso)
 app.include_router(registro_donaciones.router, dependencies=con_permiso)
 app.include_router(rutas_donantes.router, dependencies=con_permiso)
+app.include_router(despachos.router, dependencies=con_permiso)
 app.include_router(sesion.router)
 
 

@@ -77,7 +77,7 @@ class TestOpcionesDelMenu(unittest.TestCase):
             self.rutas(ATENCION),
             ["/donantes/registrar", "/elegibilidad", "/donaciones/registrar"],
         )
-        self.assertEqual(self.rutas(INVENTARIO), ["/stock"])
+        self.assertEqual(self.rutas(INVENTARIO), ["/stock", "/despachos/pendientes"])
         self.assertEqual(self.rutas(RECEPCION), ["/stock"])
         self.assertEqual(self.rutas(CLINICO), ["/stock"])
 
