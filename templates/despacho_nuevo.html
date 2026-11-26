@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuevo despacho</title>
+<style>
+  :root {
+    --sangre: #a01220; --sangre-oscuro: #6b0b15;
+    --gris-fondo: #dcdee1; --gris-claro: #eceef0; --gris-borde: #b9bdc3;
+    --gris-texto: #33363b; --gris-suave: #666b73; --blanco: #fbfbfb;
+    --ok: #2c6a3c; --aviso: #96640a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--gris-fondo); color: var(--gris-texto);
+    font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  header {
+    width: 100%; background: var(--sangre); color: #fff; text-align: center;
+    border-bottom: 6px solid var(--sangre-oscuro); padding: 26px 16px 22px;
+  }
+  header h1 { margin: 0; font-size: 1.7rem; font-weight: 600; letter-spacing: .4px; }
+  header p { margin: 6px 0 0; font-size: .95rem; color: #f1d4d7; }
+  main { width: 100%; max-width: 820px; padding: 26px 16px 10px; }
+  .panel {
+    background: var(--blanco); border: 1px solid var(--gris-borde); border-radius: 3px;
+    box-shadow: 0 1px 0 var(--gris-borde); padding: 22px 24px 26px; margin-bottom: 20px; overflow: hidden;
+  }
+  .panel h2 {
+    margin: -22px -24px 20px; padding: 10px 24px; font-size: 1rem; font-weight: 600;
+    background: var(--gris-claro); color: var(--sangre-oscuro); text-align: left;
+    border-bottom: 1px solid var(--gris-borde); border-left: 5px solid var(--sangre);
+  }
+  .nota { font-size: .9rem; color: var(--gris-suave); margin: 0 0 14px; }
+  .tabla { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--gris-claro); }
+  th { background: var(--gris-claro); color: var(--gris-suave); font-weight: 600; font-size: .9rem; }
+  tbody tr:hover { background: #f3f4f6; }
+  tbody tr:last-child td { border-bottom: 0; }
+  .grupo { display: inline-block; min-width: 40px; text-align: center; border: 2px solid var(--sangre); color: var(--sangre); font-weight: 700; padding: 0 8px; border-radius: 3px; background: #fff; }
+  .vacio { text-align: center; color: var(--gris-suave); padding: 26px 10px; }
+  .datos { display: grid; grid-template-columns: 1fr auto; margin: 0; text-align: left; }
+  .datos dt, .datos dd { padding: 9px 4px; border-bottom: 1px solid var(--gris-claro); }
+  .datos dt { color: var(--gris-suave); }
+  .datos dd { margin: 0; font-weight: 600; text-align: right; }
+  .datos dt:nth-last-of-type(1), .datos dd:last-of-type { border-bottom: 0; }
+  .btn {
+    display: inline-block; padding: 10px 22px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none;
+    border: 1px solid var(--sangre-oscuro); border-radius: 3px; background: var(--sangre); color: #fff;
+  }
+  .btn:hover { background: var(--sangre-oscuro); }
+  .btn:disabled { background: #b9a3a6; border-color: #b9a3a6; cursor: not-allowed; }
+  .btn.sec { background: #fff; color: var(--sangre-oscuro); border-color: var(--gris-borde); }
+  .btn.sec:hover { background: var(--gris-claro); }
+  .btn.chico { padding: 6px 16px; font-size: .9rem; }
+  .btn:focus-visible, input:focus-visible { outline: 3px solid #d98a92; outline-offset: 2px; }
+  input[type=checkbox] { accent-color: var(--sangre); width: 18px; height: 18px; }
+  .msg { border-radius: 3px; padding: 12px 14px; margin: 16px 0 0; font-weight: 600; text-align: left; }
+  .msg.error { background: #f6e1e3; border: 1px solid var(--sangre); color: var(--sangre-oscuro); }
+  .msg.exito { background: #e1efe4; border: 1px solid var(--ok); color: var(--ok); }
+  .msg.aviso { background: #fdf5e6; border: 1px solid var(--aviso); color: var(--aviso); }
+  .oculto { display: none; }
+  .acciones { margin-top: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nuevo despacho</h1>
+  <p>Seleccione las unidades que se enviarán al centro médico</p>
+</header>
+<main>
+  <section class="panel">
+    <h2>Solicitud</h2>
+    <dl class="datos">
+      <dt>Centro médico</dt><dd>{{ solicitud.centro_medico }}</dd>
+      <dt>Tipo</dt><dd>{{ solicitud.tipo }}</dd>
+      <dt>Grupo sanguíneo</dt><dd><span class="grupo">{{ solicitud.grupo_sanguineo }}</span></dd>
+      <dt>Cantidad solicitada</dt><dd id="cantidad" data-valor="{{ solicitud.cantidad }}" data-solicitud="{{ solicitud.id_solicitud }}">{{ solicitud.cantidad }}</dd>
+      <dt>Fecha de solicitud</dt><dd>{{ solicitud.fecha }}</dd>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <h2>Unidades disponibles</h2>
+    <div id="contenedor-unidades">
+      {% if unidades|length < solicitud.cantidad %}
+      <div class="msg aviso" style="margin-top:0;margin-bottom:16px">
+        Hay {{ unidades|length }} unidad(es) disponible(s) y se solicitaron {{ solicitud.cantidad }}. No se puede completar el despacho.
+      </div>
+      {% else %}
+      <p class="nota">Se marcan primero las que vencen antes. Puede cambiar la selección.</p>
+      {% endif %}
+
+      {% if unidades %}
+      <div class="tabla">
+        <table>
+          <thead><tr><th></th><th>N.º unidad</th><th>Componente</th><th>Grupo</th><th>Extracción</th><th>Caducidad</th></tr></thead>
+          <tbody>
+            {% for u in unidades %}
+            <tr>
+              <td><input type="checkbox" class="chk" value="{{ u.id_unidad }}" {% if loop.index <= solicitud.cantidad %}checked{% endif %} aria-label="Unidad {{ u.id_unidad }}"></td>
+              <td>#{{ u.id_unidad }}</td>
+              <td>{{ u.tipo }}</td>
+              <td><span class="grupo">{{ u.grupo_sanguineo }}</span></td>
+              <td>{{ u.fecha_extraccion }}</td>
+              <td>{{ u.fecha_caducidad }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="vacio">No hay unidades disponibles de este tipo y grupo.</div>
+      {% endif %}
+    </div>
+
+    <p class="nota" style="margin:16px 0 0">Seleccionadas: <strong id="contador">0</strong> de {{ solicitud.cantidad }}</p>
+    <div class="acciones">
+      <button type="button" class="btn" id="btnConfirmar" disabled>Confirmar despacho</button>
+      <a class="btn sec" href="/despachos/pendientes">Volver</a>
+    </div>
+    <div id="mensaje" class="msg oculto" role="alert"></div>
+  </section>
+</main>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  var requerida = parseInt($("cantidad").dataset.valor, 10);
+  var idSolicitud = parseInt($("cantidad").dataset.solicitud, 10);
+
+  function getChecks() {
+    return document.querySelectorAll(".chk");
+  }
+
+  function seleccionadas() {
+    return Array.prototype.filter.call(getChecks(), function (c) { return c.checked; })
+      .map(function (c) { return parseInt(c.value, 10); });
+  }
+
+  function actualizar() {
+    var n = seleccionadas().length;
+    $("contador").textContent = n;
+    $("btnConfirmar").disabled = (n !== requerida);
+  }
+
+  function vincularEventosChecks() {
+    getChecks().forEach(function (c) {
+      c.removeEventListener("change", actualizar);
+      c.addEventListener("change", actualizar);
+    });
+  }
+
+  function mostrar(texto, tipo) {
+    $("mensaje").textContent = texto;
+    $("mensaje").className = "msg " + tipo;
+  }
+
+  async function actualizarListaUnidades() {
+    try {
+      var resp = await fetch("/despachos/solicitudes/" + idSolicitud + "/unidades-disponibles");
+      if (!resp.ok) { actualizar(); return; }
+      var unidades = await resp.json();
+      renderizarUnidades(unidades);
+    } catch (e) {
+      actualizar();
+    }
+  }
+
+  function renderizarUnidades(unidades) {
+    var contenedor = $("contenedor-unidades");
+    if (!unidades || unidades.length === 0) {
+      contenedor.innerHTML = '<div class="msg aviso" style="margin-top:0;margin-bottom:16px">' +
+        'Hay 0 unidad(es) disponible(s) y se solicitaron ' + requerida + '. No se puede completar el despacho.' +
+        '</div><div class="vacio">No hay unidades disponibles de este tipo y grupo.</div>';
+      actualizar();
+      return;
+    }
+
+    var htmlAviso = '';
+    if (unidades.length < requerida) {
+      htmlAviso = '<div class="msg aviso" style="margin-top:0;margin-bottom:16px">' +
+        'Hay ' + unidades.length + ' unidad(es) disponible(s) y se solicitaron ' + requerida + '. No se puede completar el despacho.' +
+        '</div>';
+    } else {
+      htmlAviso = '<p class="nota">Se marcan primero las que vencen antes. Puede cambiar la selección.</p>';
+    }
+
+    var htmlTabla = '<div class="tabla"><table>' +
+      '<thead><tr><th></th><th>N.º unidad</th><th>Componente</th><th>Grupo</th><th>Extracción</th><th>Caducidad</th></tr></thead>' +
+      '<tbody>';
+
+    for (var i = 0; i < unidades.length; i++) {
+      var u = unidades[i];
+      var checked = (i < requerida) ? 'checked' : '';
+      htmlTabla += '<tr>' +
+        '<td><input type="checkbox" class="chk" value="' + u.id_unidad + '" ' + checked + ' aria-label="Unidad ' + u.id_unidad + '"></td>' +
+        '<td>#' + u.id_unidad + '</td>' +
+        '<td>' + u.tipo + '</td>' +
+        '<td><span class="grupo">' + u.grupo_sanguineo + '</span></td>' +
+        '<td>' + u.fecha_extraccion + '</td>' +
+        '<td>' + u.fecha_caducidad + '</td>' +
+        '</tr>';
+    }
+    htmlTabla += '</tbody></table></div>';
+
+    contenedor.innerHTML = htmlAviso + htmlTabla;
+    vincularEventosChecks();
+    actualizar();
+  }
+
+  async function confirmar() {
+    $("btnConfirmar").disabled = true;
+    try {
+      var resp = await fetch("/despachos/nuevo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_solicitud: idSolicitud, ids_unidades: seleccionadas() })
+      });
+      var d = await resp.json();
+      if (!resp.ok) {
+        mostrar(d.detail, "error");
+        await actualizarListaUnidades();
+        return;
+      }
+      mostrar(d.mensaje, "exito");
+      setTimeout(function () { window.location.href = "/despachos/pendientes"; }, 1200);
+    } catch (e) {
+      mostrar("No se pudo conectar con el servidor.", "error");
+      actualizar();
+    }
+  }
+
+  vincularEventosChecks();
+  $("btnConfirmar").addEventListener("click", confirmar);
+  actualizar();
+</script>
+</body>
+</html>

@@ -39,11 +39,11 @@
 <body>
   <nav>
     <span class="titulo"> Gestión de Donaciones</span>
-    <button data-url="/donantes/registrar">Registrar donante</button>
-    <button data-url="/elegibilidad">Elegibilidad</button>
-    <button data-url="/donaciones/registrar">Registrar donación</button>
-    <button data-url="/stock">Disponibilidad</button>
-
+    {# solo las opciones del cargo del usuario (rutas/permisos.py) #}
+    {% for opcion in opciones %}
+    <button data-url="{{ opcion.url }}">{{ opcion.texto }}</button>
+    {% endfor %}
+    
     <div class="usuario">
       <span><strong id="nombreUsuario">{{ usuario.nombre }}</strong> · {{ usuario.nombre_cargo }}{% if usuario.centro_medico %} · {{ usuario.centro_medico }}{% endif %}</span>
       <form method="post" action="/logout">
@@ -69,7 +69,8 @@
       botones.forEach(b => b.classList.toggle("activo", b.dataset.url === ruta));
     });
 
-    ir("/donantes/registrar");
+    // abre la primera opción del cargo
+    if (botones.length > 0) ir(botones[0].dataset.url);
   </script>
 </body>
 </html>

@@ -56,3 +56,5 @@ Las pruebas usan `unittest`. Desde la raíz del proyecto:
 ```bash
 python -m unittest -v
 ```
+> `requirements.txt` incluye `uvicorn[standard]`: sin él, el WebSocket de `/stock`
+> (actualización en vivo del inventario) no funciona.

@@ -142,7 +142,6 @@
     </dl>
   </section>
 </main>
-<footer>Datos de ejemplo: 12345678-5 (Apto), 11111111-1 (Diferido temporal), 7654321-6 (Rechazado permanente)</footer>
 
 <script>
   var NOMBRE_ESTADO = { APTO: "Apto", DIFERIDO_TEMPORAL: "Diferido temporal", RECHAZADO_PERMANENTE: "Rechazado permanente" };
@@ -173,10 +172,8 @@
     return dv(p[0]) === p[1];
   }
 
-  function fmt(d_str) {
-    if (!d_str) return "";
-    var d = new Date(d_str);
-    return d.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
+  function fmt(iso) {
+    return iso ? iso.split("-").reverse().join("/") : "";
   }
 
   function mostrar(el, msg, tipo) {
@@ -193,7 +190,8 @@
   function tipoElegido() {
     return document.querySelector("input[name=tipo]:checked").value;
   }
-async function buscar() {
+
+  async function buscar() {
     ocultar();
     donanteActual = null;
     var texto = $("run").value.trim();
@@ -216,8 +214,8 @@ async function buscar() {
       $("dSangre").textContent = d.tipo_sangre;
       
       var est = $("dEstado");
-      est.textContent = NOMBRE_ESTADO[d.estado] || d.estado;
-      est.className = "estado " + (d.estado === "APTO" ? "apto" : d.estado === "DIFERIDO_TEMPORAL" ? "no-apto" : "rechazado");
+      est.textContent = NOMBRE_ESTADO[d.estado] || "Sin evaluar";
+      est.className = "estado " + (d.estado === "APTO" ? "apto" : d.estado === "RECHAZADO_PERMANENTE" ? "rechazado" : "no-apto");
       
       $("panelDonante").classList.remove("oculto");
       $("panelDonacion").classList.remove("oculto");
@@ -231,11 +229,6 @@ async function buscar() {
     $("panelUnidad").classList.add("oculto");
     if (!donanteActual) return;
 
-    if (donanteActual.estado !== "APTO") {
-      mostrar($("msgDonacion"), "El donante no está Apto. La donación no pudo ser registrada.", "error");
-      return;
-    }
-    
     var tipo = tipoElegido();
 
     try {
@@ -256,7 +249,7 @@ async function buscar() {
       }
 
       $("uDonacion").textContent = "#" + result.id_donacion;
-      $("uComp").textContent = result.unidad.tipo_componente;
+      $("uComp").textContent = result.unidad.tipo_componente === "SANGRE" ? "Sangre" : "Plaquetas";
       $("uSangre").textContent = result.unidad.tipo_sangre;
       $("uExtr").textContent = fmt(result.unidad.fecha_extraccion);
       $("uCad").textContent = fmt(result.unidad.fecha_caducidad);

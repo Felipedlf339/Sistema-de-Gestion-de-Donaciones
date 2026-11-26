@@ -66,14 +66,21 @@ def procesar_reserva_solicitud(
     Si falla porque otra operación las tomó antes, lanza ReservaFallidaError
     con el aviso para el usuario y deja la solicitud en estado PENDIENTE.
     """
+
+    # toma la solicitud solo si sigue Pendiente
+    cursor = conexion.execute(
+        "UPDATE solicitudes SET estado = ? WHERE id_solicitud = ? AND UPPER(estado) = ?",
+        (
+            EstadoSolicitud.ATENDIDA.value,
+            id_solicitud,
+            EstadoSolicitud.PENDIENTE.value,
+        ),
+    )
+    if cursor.rowcount == 0:
+        conexion.rollback()
+        raise ReservaFallidaError("La solicitud ya fue atendida por otra operación")
     exito = reservar_unidades_despacho(conexion, id_despacho, ids_unidades)
     if not exito:
         raise ReservaFallidaError(
             "Las unidades ya fueron reservadas, intente nuevamente"
-        )
-
-    with conexion:
-        conexion.execute(
-            "UPDATE solicitudes SET estado = ? WHERE id_solicitud = ?",
-            (EstadoSolicitud.ATENDIDA.value, id_solicitud),
         )
