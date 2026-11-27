@@ -5,6 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from gestion_donaciones.database import obtener_conexion
+from gestion_donaciones.despacho_solicitudes import (
+    ErrorDespacho,
+    SolicitudNoEncontrada,
+    despachar_solicitud,
+)
+from gestion_donaciones.modelos.enums import EstadoSolicitud
 from pydantic import BaseModel
 
 from gestion_donaciones.database import obtener_conexion
@@ -64,6 +71,22 @@ def ver_solicitudes_pendientes(request: Request):
     )
 
 
+@router.post("/solicitudes/{id_solicitud}/despachar")
+def despachar(id_solicitud: int, usuario=Depends(obtener_usuario)):
+    """Despacha la solicitud con las unidades que vencen antes (asignación automática)"""
+    try:
+        resultado = despachar_solicitud(id_solicitud, usuario["id_personal"])
+    except SolicitudNoEncontrada as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except ErrorDespacho as error:  
+        raise HTTPException(status_code=409, detail=str(error))
+
+    return {
+        "id_despacho": resultado.despacho.id_despacho,
+        "id_solicitud": id_solicitud,
+        "estado": resultado.despacho.estado.value,
+        "unidades": resultado.ids_unidades,
+    }
 def obtener_solicitud(id_solicitud):
     with closing(obtener_conexion()) as c:
         return c.execute(

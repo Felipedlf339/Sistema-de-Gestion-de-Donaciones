@@ -8,12 +8,18 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from gestion_donaciones import database
+from gestion_donaciones.rutas import permisos
 from gestion_donaciones.database import inicializar_bd, obtener_conexion
 from gestion_donaciones.rutas import permisos
 from main import app
 
 RUTA = "/despachos/pendientes"
 MENSAJE_VACIO = "No hay solicitudes por despachar."
+
+def encargado_de_inventario():
+    return {"id_personal": 1, "run": "16666666-K", "nombre": "Encargado de prueba",
+            "cargo": "ENCARGADO_INVENTARIO", "nombre_cargo": "Encargado de inventario",
+            "centro_medico": None}
 
 
 def encargado_de_inventario():
@@ -32,7 +38,6 @@ class PruebaVista(unittest.TestCase):
         parche.start()
         self.addCleanup(parche.stop)
         inicializar_bd()
-        # la pantalla pide sesión: se entra como encargado de inventario (ver rutas/permisos.py)
         app.dependency_overrides[permisos.obtener_usuario] = encargado_de_inventario
         self.addCleanup(app.dependency_overrides.clear)
         self.cliente = TestClient(app)
@@ -58,7 +63,7 @@ class PruebaVista(unittest.TestCase):
     def abrir_vista(self):
         respuesta = self.cliente.get(RUTA)
         self.assertEqual(respuesta.status_code, 200)
-        return respuesta.text
+        return re.sub(r"<script.*?</script>", "", respuesta.text, flags=re.S)
 
     def ids_en_pantalla(self, html):
         # ids de las solicitudes en el mismo orden en que aparecen
@@ -139,7 +144,7 @@ class TestDatosVisibles(PruebaVista):
         html = self.abrir_vista()
 
         self.assertIn("Despachar", html)
-        self.assertIn(f'href="/despachos/nuevo?solicitud={id_solicitud}"', html)
+        self.assertIn(f'data-despachar="{id_solicitud}"', html)
 
     def test_si_el_centro_no_existe_igual_se_muestra_la_solicitud(self):
         id_solicitud = self.crear_solicitud(99, "2026-11-15T09:00:00")

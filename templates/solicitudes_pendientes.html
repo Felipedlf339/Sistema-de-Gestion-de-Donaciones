@@ -74,6 +74,7 @@
 <main>
   <section class="panel">
     <h2>Solicitudes pendientes</h2>
+    <div id="aviso" class="msg oculto" role="alert"></div>
     {% if solicitudes %}
     <div class="tabla">
       <table>
@@ -88,7 +89,10 @@
             <td><span class="grupo">{{ s.grupo_sanguineo }}</span></td>
             <td>{{ s.cantidad }}</td>
             <td>{{ s.fecha }}</td>
-            <td><a class="btn chico" href="/despachos/nuevo?solicitud={{ s.id_solicitud }}">Despachar</a></td>
+            <td>
+              <button type="button" class="btn chico" data-despachar="{{ s.id_solicitud }}">Despachar</button>
+              <a class="btn chico sec" href="/despachos/nuevo?solicitud={{ s.id_solicitud }}">Seleccionar</a>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -99,5 +103,43 @@
     {% endif %}
   </section>
 </main>
+<script>
+  const aviso = document.getElementById("aviso");
+  const cuerpo = document.getElementById("tabla-solicitudes");
+
+  function mostrarAviso(texto, tipo) {
+    aviso.textContent = texto;
+    aviso.className = "msg " + tipo;
+  }
+
+  if (cuerpo) {
+    cuerpo.addEventListener("click", async function (evento) {
+      const boton = evento.target.closest("[data-despachar]");
+      if (!boton) return;
+      boton.disabled = true;  
+      try {
+        const respuesta = await fetch(
+          "/despachos/solicitudes/" + boton.dataset.despachar + "/despachar", { method: "POST" });
+        const datos = await respuesta.json().catch(function () { return {}; });
+        if (respuesta.ok) {
+          boton.closest("tr").remove();
+          mostrarAviso("Despacho #" + datos.id_despacho + " registrado en tránsito con " +
+                       datos.unidades.length + " unidad(es).", "exito");
+          if (!cuerpo.querySelector("tr")) {
+            cuerpo.closest(".tabla").outerHTML =
+              '<div class="vacio">No hay solicitudes por despachar.</div>';
+          }
+        } else {
+          mostrarAviso(datos.detail || ("No se pudo despachar (error " + respuesta.status + ")."), "error");
+          boton.disabled = false;
+        }
+      } catch (error) {
+        console.error(error);
+        mostrarAviso("No se pudo contactar al servidor.", "error");
+        boton.disabled = false;
+      }
+    });
+  }
+</script>
 </body>
 </html>
