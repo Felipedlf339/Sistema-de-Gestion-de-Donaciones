@@ -10,10 +10,17 @@ from fastapi.testclient import TestClient
 from gestion_donaciones import database
 from gestion_donaciones.rutas import permisos
 from gestion_donaciones.database import inicializar_bd, obtener_conexion
+from gestion_donaciones.rutas import permisos
 from main import app
 
 RUTA = "/despachos/pendientes"
 MENSAJE_VACIO = "No hay solicitudes por despachar."
+
+def encargado_de_inventario():
+    return {"id_personal": 1, "run": "16666666-K", "nombre": "Encargado de prueba",
+            "cargo": "ENCARGADO_INVENTARIO", "nombre_cargo": "Encargado de inventario",
+            "centro_medico": None}
+
 
 def encargado_de_inventario():
     return {"id_personal": 1, "run": "16666666-K", "nombre": "Encargado de prueba",

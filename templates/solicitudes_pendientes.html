@@ -91,6 +91,7 @@
             <td>{{ s.fecha }}</td>
             <td>
               <button type="button" class="btn chico" data-despachar="{{ s.id_solicitud }}">Despachar</button>
+              <a class="btn chico sec" href="/despachos/nuevo?solicitud={{ s.id_solicitud }}">Seleccionar</a>
             </td>
           </tr>
           {% endfor %}

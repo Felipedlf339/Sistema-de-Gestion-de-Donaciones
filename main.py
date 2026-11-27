@@ -5,10 +5,9 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from gestion_donaciones.rutas import disponibilidad, elegibilidad, permisos, registro_donaciones, sesion
+from gestion_donaciones.rutas import despachos, disponibilidad, elegibilidad, permisos, recepcion, registro_donaciones, sesion
 from gestion_donaciones.rutas import registro_donantes as rutas_donantes
 from gestion_donaciones.database import inicializar_bd
-from gestion_donaciones.rutas import disponibilidad, elegibilidad, registro_donaciones, despachos
 
 inicializar_bd()
 app = FastAPI(title="Sistema de Gestión de Donaciones")
@@ -51,6 +50,7 @@ app.include_router(elegibilidad.router, dependencies=con_permiso)
 app.include_router(registro_donaciones.router, dependencies=con_permiso)
 app.include_router(rutas_donantes.router, dependencies=con_permiso)
 app.include_router(despachos.router, dependencies=con_permiso)
+app.include_router(recepcion.router, dependencies=con_permiso)
 app.include_router(sesion.router)
 
 

@@ -51,12 +51,20 @@ def insertar_datos_prueba():
         """, (run, nombre, grupo, rh, estado))
     
     # Insertamos 5 unidades de prueba (4 disponibles, 1 usada para verificar que se oculta)
+    # valores iguales a los de los enums (SANGRE, DISPONIBLE...); hay varias unidades
+    # para poder probar los despachos con las solicitudes de ejemplo
     unidades = [
-        (1, 'Sangre', 'A+', '2026-11-10', '2026-12-22', 'Disponible'),
-        (2, 'Plaquetas', 'O+', '2026-11-12', '2026-11-17', 'Disponible'),
-        (3, 'Plasma', 'O-', '2026-11-01', '2027-11-01', 'Disponible'),
-        (4, 'Sangre', 'B+', '2026-10-15', '2026-11-26', 'Disponible'),
-        (5, 'Sangre', 'AB+', '2026-11-11', '2026-12-23', 'Usado')
+        (1,  'SANGRE',    'A+',  '2026-11-10', '2026-12-22', 'DISPONIBLE'),
+        (2,  'SANGRE',    'A+',  '2026-11-11', '2026-12-23', 'DISPONIBLE'),
+        (3,  'SANGRE',    'A+',  '2026-11-12', '2026-12-24', 'DISPONIBLE'),
+        (4,  'PLAQUETAS', 'O+',  '2026-11-22', '2026-11-27', 'DISPONIBLE'),
+        (5,  'PLAQUETAS', 'O+',  '2026-11-23', '2026-11-28', 'DISPONIBLE'),
+        (6,  'PLASMA',    'O-',  '2026-11-01', '2027-11-01', 'DISPONIBLE'),
+        (7,  'SANGRE',    'B+',  '2026-11-14', '2026-12-26', 'DISPONIBLE'),
+        (8,  'SANGRE',    'B+',  '2026-11-15', '2026-12-27', 'DISPONIBLE'),
+        (9,  'SANGRE',    'B+',  '2026-11-16', '2026-12-28', 'DISPONIBLE'),
+        (10, 'SANGRE',    'B+',  '2026-11-17', '2026-12-29', 'DISPONIBLE'),
+        (11, 'SANGRE',    'AB+', '2026-11-11', '2026-12-23', 'UTILIZADA'),
     ]
 
     cursor.executemany("""
@@ -64,14 +72,13 @@ def insertar_datos_prueba():
             VALUES (?, ?, ?, ?, ?, ?)
         """, unidades)
 
-    if cursor.execute("SELECT COUNT(*) FROM centros_medicos").fetchone()[0] == 0:
-        cursor.executemany(
-            "INSERT INTO centros_medicos (nombre, direccion) VALUES (?, ?)",
-            [
-                ("Hospital Regional de Concepción", "San Martín 1436"),
-                ("Clínica Biobío", "Av. Jorge Alessandri 3515"),
-            ],
-        )
+    # cada centro se crea solo si no existe, para no duplicar el que ya creó el personal de prueba
+    for nombre, direccion in [
+        ("Hospital Regional de Concepción", "San Martín 1436"),
+        ("Clínica Biobío", "Av. Jorge Alessandri 3515"),
+    ]:
+        if cursor.execute("SELECT 1 FROM centros_medicos WHERE nombre = ?", (nombre,)).fetchone() is None:
+            cursor.execute("INSERT INTO centros_medicos (nombre, direccion) VALUES (?, ?)", (nombre, direccion))
     if cursor.execute("SELECT COUNT(*) FROM solicitudes").fetchone()[0] == 0:
         cursor.executemany(
             """
@@ -93,5 +100,5 @@ def insertar_datos_prueba():
 
 if __name__ == "__main__":
     inicializar_bd()
+    insertar_personal_prueba()   # primero: crea el Hospital Regional (centro 1) y a su personal
     insertar_datos_prueba()
-    insertar_personal_prueba()
