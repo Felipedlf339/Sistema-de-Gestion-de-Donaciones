@@ -8,8 +8,13 @@ from starlette.middleware.sessions import SessionMiddleware
 from gestion_donaciones.rutas import despachos, disponibilidad, elegibilidad, permisos, recepcion, registro_donaciones, sesion
 from gestion_donaciones.rutas import registro_donantes as rutas_donantes
 from gestion_donaciones.database import inicializar_bd
+from contextlib import asynccontextmanager
 
-inicializar_bd()
+@asynccontextmanager
+async def lifespan(app):
+    inicializar_bd()
+    yield
+
 app = FastAPI(title="Sistema de Gestión de Donaciones")
 templates = Jinja2Templates(directory="templates")
 

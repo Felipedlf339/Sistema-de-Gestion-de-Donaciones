@@ -29,9 +29,9 @@ OPCIONES_MENU = [
     ("/donantes/registrar", "Registrar donante"),
     ("/elegibilidad", "Elegibilidad"),
     ("/donaciones/registrar", "Registrar donación"),
+    ("/stock", "Disponibilidad"),
     ("/despachos/pendientes", "Despachos"),
     ("/despachos/recepcion", "Recepción"),
-    ("/stock", "Disponibilidad"),
 ]
 
 MENSAJE_SIN_SESION = "Debe iniciar sesión."

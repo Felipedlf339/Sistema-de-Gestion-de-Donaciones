@@ -14,8 +14,13 @@ from gestion_donaciones.despacho_solicitudes import (
 from gestion_donaciones.modelos.enums import EstadoSolicitud
 from pydantic import BaseModel
 
-from gestion_donaciones.database import obtener_conexion, reservar_unidades_despacho
+from gestion_donaciones.database import obtener_conexion
 from gestion_donaciones.modelos.enums import EstadoDespacho, EstadoSolicitud, EstadoUnidad
+from gestion_donaciones.reservas import (
+    ReservaFallidaError,
+    procesar_reserva_solicitud,
+    reservar_unidades_despacho,
+)
 from gestion_donaciones.rutas.permisos import obtener_usuario
 
 router = APIRouter(prefix="/despachos", tags=["Despachos"])
@@ -138,6 +143,14 @@ def ver_formulario_despacho(request: Request, solicitud: int):
     )
 
 
+@router.get("/solicitudes/{id_solicitud}/unidades-disponibles")
+def api_unidades_disponibles(id_solicitud: int, usuario=Depends(obtener_usuario)):
+    s = obtener_solicitud(id_solicitud)
+    if s is None:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada.")
+    return obtener_unidades_disponibles(s["tipo_hemoderivado"], s["grupo_sanguineo"])
+
+
 class DespachoCreate(BaseModel):
     id_solicitud: int
     ids_unidades: list[int]
@@ -145,30 +158,38 @@ class DespachoCreate(BaseModel):
 
 @router.post("/nuevo")
 def crear_despacho(datos: DespachoCreate, usuario=Depends(obtener_usuario)):
+    if usuario.get("id_personal") is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Su sesión no es válida. Cierre sesión e inicie sesión nuevamente.",
+        )
     s = obtener_solicitud(datos.id_solicitud)
     if s is None or s["estado"].upper() != EstadoSolicitud.PENDIENTE.value:
         raise HTTPException(status_code=404, detail="La solicitud no existe o ya fue atendida.")
-    if len(set(datos.ids_unidades)) != s["cantidad"]:
+    ids_unidades = list(dict.fromkeys(datos.ids_unidades))
+    if len(ids_unidades) != s["cantidad"]:
         raise HTTPException(status_code=400, detail=f"Debe seleccionar exactamente {s['cantidad']} unidad(es).")
 
-    validas = {u["id_unidad"] for u in obtener_unidades_disponibles(s["tipo_hemoderivado"], s["grupo_sanguineo"])}
-    if not set(datos.ids_unidades) <= validas:
-        raise HTTPException(status_code=400, detail="Alguna unidad ya no está disponible. Actualice la pantalla.")
-
     with closing(obtener_conexion()) as c:
-        c.execute("BEGIN IMMEDIATE")
         try:
-            c.execute("UPDATE solicitudes SET estado = 'ATENDIDA' WHERE id_solicitud = ?", (datos.id_solicitud,))
             cursor = c.execute(
                 """INSERT INTO despachos (id_solicitud, id_encargado, fecha_despacho, estado)
                    VALUES (?, ?, ?, ?)""",
-                (datos.id_solicitud, usuario["id_personal"],
-                 datetime.now().isoformat(timespec="seconds"), EstadoDespacho.EN_TRANSITO.value),
+                (
+                    datos.id_solicitud,
+                    usuario["id_personal"],
+                    datetime.now().isoformat(timespec="seconds"),
+                    EstadoDespacho.EN_TRANSITO.value,
+                ),
             )
             id_despacho = cursor.lastrowid
-            # reserva las unidades y confirma; si falla alguna, deshace todo
-            if not reservar_unidades_despacho(c, id_despacho, datos.ids_unidades):
-                raise HTTPException(status_code=409, detail="Alguna unidad ya no está disponible.")
+            procesar_reserva_solicitud(c, datos.id_solicitud, id_despacho, ids_unidades)
+        except ReservaFallidaError as e:
+            c.rollback()
+            raise HTTPException(status_code=409, detail=str(e))
+        except HTTPException:
+            c.rollback()
+            raise
         except Exception:
             c.rollback()
             raise

@@ -84,8 +84,8 @@ class TestOpcionesDelMenu(unittest.TestCase):
             ["/donantes/registrar", "/elegibilidad", "/donaciones/registrar"],
         )
         self.assertEqual(self.rutas(INVENTARIO), ["/stock", "/despachos/pendientes"])
-        self.assertEqual(self.rutas(RECEPCION), ["/stock"])
-        self.assertEqual(self.rutas(CLINICO), ["/stock"])
+        self.assertEqual(self.rutas(RECEPCION), ["/stock", "/despachos/recepcion"])
+        self.assertEqual(self.rutas(CLINICO), ["/stock", "/despachos/recepcion"])
 
     def test_todos_los_cargos_tienen_al_menos_una_opcion(self):
         for cargo in list(CargoPersonal) + list(CargoMedico):

@@ -1,7 +1,6 @@
 import sqlite3
 from pathlib import Path
 from contextlib import closing
-from gestion_donaciones.modelos.enums import EstadoUnidad
 
 DB_PATH = Path(__file__).resolve().parent / "donaciones.db"
 
@@ -17,6 +16,38 @@ def agregar_columna_si_falta(conexion, tabla, columna, definicion):
     if columna not in columnas:
         conexion.execute(f"ALTER TABLE {tabla} ADD COLUMN {columna} {definicion}")
 
+def migrar_personal_a_id_entero(conexion):
+    """
+    Las bases antiguas tenían id_personal TEXT PRIMARY KEY, que en SQLite deja el id
+    en NULL. Reconstruye la tabla con id entero autoincremental y conserva los datos.
+    """
+    columnas = {fila["name"]: fila["type"] for fila in conexion.execute("PRAGMA table_info(personal)")}
+    if not columnas or columnas.get("id_personal", "").upper() == "INTEGER":
+        return  # tabla nueva o ya migrada
+
+    conexion.execute("DROP TABLE IF EXISTS personal_nueva")
+    conexion.execute("""
+        CREATE TABLE personal_nueva (
+            id_personal INTEGER PRIMARY KEY AUTOINCREMENT,
+            run TEXT UNIQUE NOT NULL,
+            nombre TEXT NOT NULL,
+            correo TEXT,
+            telefono TEXT,
+            cargo TEXT NOT NULL,
+            id_centro_medico INTEGER REFERENCES centros_medicos(id_centro_medico),
+            contrasena_hash TEXT NOT NULL
+        )
+    """)
+    conexion.execute("""
+        INSERT INTO personal_nueva (run, nombre, correo, telefono, cargo,
+                                    id_centro_medico, contrasena_hash)
+        SELECT run, nombre, correo, telefono, cargo, id_centro_medico, contrasena_hash
+        FROM personal
+        WHERE contrasena_hash IS NOT NULL
+        ORDER BY rowid
+    """)
+    conexion.execute("DROP TABLE personal")
+    conexion.execute("ALTER TABLE personal_nueva RENAME TO personal")
 
 def inicializar_bd() -> None:
     with closing(obtener_conexion()) as conexion:
@@ -64,6 +95,7 @@ def inicializar_bd() -> None:
             agregar_columna_si_falta(conexion, "personal", "id_centro_medico",
                                      "INTEGER REFERENCES centros_medicos(id_centro_medico)")
             agregar_columna_si_falta(conexion, "personal", "contrasena_hash", "TEXT")
+            migrar_personal_a_id_entero(conexion)
             conexion.execute("""
                 CREATE TABLE IF NOT EXISTS donaciones (
                     id_donacion INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,51 +151,7 @@ def inicializar_bd() -> None:
             # persona del centro médico que confirmó la recepción (HU-11)
             agregar_columna_si_falta(conexion, "despachos", "id_personal_receptor",
                                      "INTEGER REFERENCES personal(id_personal)")
-    
-def reservar_unidades_despacho(
-    conexion: sqlite3.Connection,
-    id_despacho: int,
-    ids_unidades: list[int],
-) -> bool:
-    """
-    Si alguna unidad no existe o ya no está disponible, deshace toda la operación
-    y retorna False. Si todas se reservan, confirma y retorna True.
-    """
-    if not ids_unidades:
-        return False
-    if len(set(ids_unidades)) != len(ids_unidades):
-        return False
 
-    cursor = conexion.cursor()
-    try:
-        if not conexion.in_transaction:
-            cursor.execute("BEGIN IMMEDIATE")
 
-        for id_unidad in ids_unidades:
-            cursor.execute(
-                """
-                UPDATE unidades
-                SET estado = ?,
-                    id_despacho = ?
-                WHERE id_unidad = ?
-                  AND estado = ?
-                """,
-                (
-                    EstadoUnidad.RESERVADA.value,
-                    id_despacho,
-                    id_unidad,
-                    EstadoUnidad.DISPONIBLE.value,
-                ),
-            )
-
-            if cursor.rowcount == 0:
-                conexion.rollback()
-                return False
-
-        conexion.commit()
-        return True
-
-    except sqlite3.Error:
-        if conexion.in_transaction:
-            conexion.rollback()
-        raise
+# Re-exportar para retrocompatibilidad
+from gestion_donaciones.reservas import reservar_unidades_despacho

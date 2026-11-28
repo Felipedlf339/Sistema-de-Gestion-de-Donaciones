@@ -6,11 +6,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 from gestion_donaciones import database
-from gestion_donaciones.database import (
-    inicializar_bd,
-    obtener_conexion,
-    reservar_unidades_despacho,
-)
+from gestion_donaciones.database import inicializar_bd, obtener_conexion
+from gestion_donaciones.reservas import reservar_unidades_despacho
 from gestion_donaciones.modelos.enums import EstadoUnidad
 
 DISPONIBLE = EstadoUnidad.DISPONIBLE

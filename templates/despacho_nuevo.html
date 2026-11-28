@@ -85,35 +85,37 @@
 
   <section class="panel">
     <h2>Unidades disponibles</h2>
-    {% if unidades|length < solicitud.cantidad %}
-    <div class="msg aviso" style="margin-top:0;margin-bottom:16px">
-      Hay {{ unidades|length }} unidad(es) disponible(s) y se solicitaron {{ solicitud.cantidad }}. No se puede completar el despacho.
-    </div>
-    {% else %}
-    <p class="nota">Se marcan primero las que vencen antes. Puede cambiar la selección.</p>
-    {% endif %}
+    <div id="contenedor-unidades">
+      {% if unidades|length < solicitud.cantidad %}
+      <div class="msg aviso" style="margin-top:0;margin-bottom:16px">
+        Hay {{ unidades|length }} unidad(es) disponible(s) y se solicitaron {{ solicitud.cantidad }}. No se puede completar el despacho.
+      </div>
+      {% else %}
+      <p class="nota">Se marcan primero las que vencen antes. Puede cambiar la selección.</p>
+      {% endif %}
 
-    {% if unidades %}
-    <div class="tabla">
-      <table>
-        <thead><tr><th></th><th>N.º unidad</th><th>Componente</th><th>Grupo</th><th>Extracción</th><th>Caducidad</th></tr></thead>
-        <tbody>
-          {% for u in unidades %}
-          <tr>
-            <td><input type="checkbox" class="chk" value="{{ u.id_unidad }}" {% if loop.index <= solicitud.cantidad %}checked{% endif %} aria-label="Unidad {{ u.id_unidad }}"></td>
-            <td>#{{ u.id_unidad }}</td>
-            <td>{{ u.tipo }}</td>
-            <td><span class="grupo">{{ u.grupo_sanguineo }}</span></td>
-            <td>{{ u.fecha_extraccion }}</td>
-            <td>{{ u.fecha_caducidad }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      {% if unidades %}
+      <div class="tabla">
+        <table>
+          <thead><tr><th></th><th>N.º unidad</th><th>Componente</th><th>Grupo</th><th>Extracción</th><th>Caducidad</th></tr></thead>
+          <tbody>
+            {% for u in unidades %}
+            <tr>
+              <td><input type="checkbox" class="chk" value="{{ u.id_unidad }}" {% if loop.index <= solicitud.cantidad %}checked{% endif %} aria-label="Unidad {{ u.id_unidad }}"></td>
+              <td>#{{ u.id_unidad }}</td>
+              <td>{{ u.tipo }}</td>
+              <td><span class="grupo">{{ u.grupo_sanguineo }}</span></td>
+              <td>{{ u.fecha_extraccion }}</td>
+              <td>{{ u.fecha_caducidad }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="vacio">No hay unidades disponibles de este tipo y grupo.</div>
+      {% endif %}
     </div>
-    {% else %}
-    <div class="vacio">No hay unidades disponibles de este tipo y grupo.</div>
-    {% endif %}
 
     <p class="nota" style="margin:16px 0 0">Seleccionadas: <strong id="contador">0</strong> de {{ solicitud.cantidad }}</p>
     <div class="acciones">
@@ -128,18 +130,86 @@
   var $ = function (id) { return document.getElementById(id); };
   var requerida = parseInt($("cantidad").dataset.valor, 10);
   var idSolicitud = parseInt($("cantidad").dataset.solicitud, 10);
-  var checks = document.querySelectorAll(".chk");
+
+  function getChecks() {
+    return document.querySelectorAll(".chk");
+  }
 
   function seleccionadas() {
-    return Array.prototype.filter.call(checks, function (c) { return c.checked; })
+    return Array.prototype.filter.call(getChecks(), function (c) { return c.checked; })
       .map(function (c) { return parseInt(c.value, 10); });
   }
+
   function actualizar() {
     var n = seleccionadas().length;
     $("contador").textContent = n;
     $("btnConfirmar").disabled = (n !== requerida);
   }
-  function mostrar(texto, tipo) { $("mensaje").textContent = texto; $("mensaje").className = "msg " + tipo; }
+
+  function vincularEventosChecks() {
+    getChecks().forEach(function (c) {
+      c.removeEventListener("change", actualizar);
+      c.addEventListener("change", actualizar);
+    });
+  }
+
+  function mostrar(texto, tipo) {
+    $("mensaje").textContent = texto;
+    $("mensaje").className = "msg " + tipo;
+  }
+
+  async function actualizarListaUnidades() {
+    try {
+      var resp = await fetch("/despachos/solicitudes/" + idSolicitud + "/unidades-disponibles");
+      if (!resp.ok) { actualizar(); return; }
+      var unidades = await resp.json();
+      renderizarUnidades(unidades);
+    } catch (e) {
+      actualizar();
+    }
+  }
+
+  function renderizarUnidades(unidades) {
+    var contenedor = $("contenedor-unidades");
+    if (!unidades || unidades.length === 0) {
+      contenedor.innerHTML = '<div class="msg aviso" style="margin-top:0;margin-bottom:16px">' +
+        'Hay 0 unidad(es) disponible(s) y se solicitaron ' + requerida + '. No se puede completar el despacho.' +
+        '</div><div class="vacio">No hay unidades disponibles de este tipo y grupo.</div>';
+      actualizar();
+      return;
+    }
+
+    var htmlAviso = '';
+    if (unidades.length < requerida) {
+      htmlAviso = '<div class="msg aviso" style="margin-top:0;margin-bottom:16px">' +
+        'Hay ' + unidades.length + ' unidad(es) disponible(s) y se solicitaron ' + requerida + '. No se puede completar el despacho.' +
+        '</div>';
+    } else {
+      htmlAviso = '<p class="nota">Se marcan primero las que vencen antes. Puede cambiar la selección.</p>';
+    }
+
+    var htmlTabla = '<div class="tabla"><table>' +
+      '<thead><tr><th></th><th>N.º unidad</th><th>Componente</th><th>Grupo</th><th>Extracción</th><th>Caducidad</th></tr></thead>' +
+      '<tbody>';
+
+    for (var i = 0; i < unidades.length; i++) {
+      var u = unidades[i];
+      var checked = (i < requerida) ? 'checked' : '';
+      htmlTabla += '<tr>' +
+        '<td><input type="checkbox" class="chk" value="' + u.id_unidad + '" ' + checked + ' aria-label="Unidad ' + u.id_unidad + '"></td>' +
+        '<td>#' + u.id_unidad + '</td>' +
+        '<td>' + u.tipo + '</td>' +
+        '<td><span class="grupo">' + u.grupo_sanguineo + '</span></td>' +
+        '<td>' + u.fecha_extraccion + '</td>' +
+        '<td>' + u.fecha_caducidad + '</td>' +
+        '</tr>';
+    }
+    htmlTabla += '</tbody></table></div>';
+
+    contenedor.innerHTML = htmlAviso + htmlTabla;
+    vincularEventosChecks();
+    actualizar();
+  }
 
   async function confirmar() {
     $("btnConfirmar").disabled = true;
@@ -150,7 +220,11 @@
         body: JSON.stringify({ id_solicitud: idSolicitud, ids_unidades: seleccionadas() })
       });
       var d = await resp.json();
-      if (!resp.ok) { mostrar(d.detail, "error"); actualizar(); return; }
+      if (!resp.ok) {
+        mostrar(d.detail, "error");
+        await actualizarListaUnidades();
+        return;
+      }
       mostrar(d.mensaje, "exito");
       setTimeout(function () { window.location.href = "/despachos/pendientes"; }, 1200);
     } catch (e) {
@@ -159,7 +233,7 @@
     }
   }
 
-  checks.forEach(function (c) { c.addEventListener("change", actualizar); });
+  vincularEventosChecks();
   $("btnConfirmar").addEventListener("click", confirmar);
   actualizar();
 </script>

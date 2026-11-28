@@ -93,5 +93,6 @@ def procesar_registro_donacion(datos: DonacionCreate):
             "tipo_sangre": unidad.tipo_sangre.value,
             "fecha_extraccion": unidad.fecha_extraccion.isoformat(),
             "fecha_caducidad": unidad.fecha_caducidad.isoformat(),
+            "estado": unidad.estado.value,
         },
     }

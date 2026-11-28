@@ -66,6 +66,7 @@ class TestDatosDelDespacho(PruebaConBaseTemporal):
         esperadas = {
             "id_despacho", "id_solicitud", "id_encargado",
             "fecha_despacho", "fecha_recepcion", "estado",
+            "id_personal_receptor",
         }
         self.assertEqual(set(self.columnas("despachos")), esperadas)
 
